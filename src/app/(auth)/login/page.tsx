@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import FloatingTextField from "@/components/ui/floating-text-field";
 import { Mail, Phone, LockKeyhole, LogIn, UserPlus } from "lucide-react";
-import PhoneInputBR from "@/components/phone-input-br";
+import FloatingPhoneInputBR from "@/components/phone-input-br-floating";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { loginWithPassword, getMe } from "@/lib/api/auth";
@@ -51,7 +51,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-md space-y-6">
+      <Card className="w-full max-w-md space-y-3">
         <div className="flex gap-2">
           <Button variant={mode === "email" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("email")}>
             <Mail size={16} /> E-mail
@@ -71,6 +71,9 @@ export default function LoginPage() {
               <p className="text-sm text-red-500">Informe uma senha válida</p>
             )}
             <Button type="submit" className="w-full"><LogIn size={16} /> Entrar</Button>
+            <Button asChild variant="accent" className="w-full">
+              <a href="/register"><UserPlus size={16} /> Registrar</a>
+            </Button>
           </form>
         ) : (
           <form className="space-y-4" onSubmit={phoneForm.handleSubmit(onSubmitPhone)}>
@@ -78,7 +81,7 @@ export default function LoginPage() {
               control={phoneForm.control}
               name="phone"
               render={({ field }) => (
-                <PhoneInputBR value={field.value} onChange={field.onChange} />
+                <FloatingPhoneInputBR label="Celular" value={field.value} onChange={field.onChange} />
               )}
             />
             {phoneForm.formState.errors.phone && (
@@ -89,13 +92,12 @@ export default function LoginPage() {
               <p className="text-sm text-red-500">Informe uma senha válida</p>
             )}
             <Button type="submit" className="w-full"><LogIn size={16} /> Entrar</Button>
+            <Button asChild variant="accent" className="w-full">
+              <a href="/register"><UserPlus size={16} /> Registrar</a>
+            </Button>
           </form>
         )}
-        <div className="pt-1">
-          <Button asChild variant="accent" className="w-full">
-            <a href="/register"><UserPlus size={16} /> Registrar</a>
-          </Button>
-        </div>
+        
       </Card>
     </div>
   );

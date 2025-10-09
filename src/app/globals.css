@@ -44,7 +44,6 @@
 }
 
 :root {
-  /* Slightly tighter radius for a cleaner look */
   --radius: 0.75rem;
   --background: #ffffff;
   --foreground: #303030;
@@ -54,7 +53,6 @@
   --popover-foreground: #303030;
   --primary: #24bfbf;
   --primary-foreground: #ffffff;
-  /* Teal shades and tints */
   --primary-600: #20A7A7;
   --primary-700: #1B9090;
   --primary-tint-1: #F0FBFB;
@@ -62,9 +60,7 @@
   --secondary: #f5f5f5;
   --secondary-foreground: #303030;
   --muted: #818497;
-  /* Darker, higher-contrast gray for placeholders and secondary text */
-  --muted-foreground: #6b7280; /* neutral-500 */
-  /* Neutral palette */
+  --muted-foreground: #6b7280;
   --neutral-900: #111827;
   --neutral-800: #1F2937;
   --neutral-700: #374151;
@@ -72,7 +68,6 @@
   --neutral-500: #6B7280;
   --neutral-300: #D1D5DB;
   --neutral-100: #F3F4F6;
-  /* Lavender accent */
   --lavender: #A78BFA;
   --lavender-600: #8B5CF6;
   --lavender-700: #6D28D9;
@@ -154,14 +149,15 @@
     @apply border-border outline-ring/50;
   }
   body {
-    /* Keep text color from theme */
     @apply text-foreground;
-    /* Friendly, subtle background respecting theme colors */
     background-color: var(--background);
     background-image:
       radial-gradient(1200px 800px at 10% -10%, color-mix(in oklab, var(--primary) 8%, var(--background)), transparent 60%),
       radial-gradient(1100px 750px at 110% 110%, color-mix(in oklab, var(--primary) 6%, var(--background)), transparent 60%),
       radial-gradient(900px 600px at 80% 10%, color-mix(in oklab, var(--lavender) 8%, var(--background)), transparent 60%);
     background-attachment: fixed;
+  }
+  button, [role="button"], a, summary, select, input[type="checkbox"], input[type="radio"] {
+    cursor: pointer;
   }
 }

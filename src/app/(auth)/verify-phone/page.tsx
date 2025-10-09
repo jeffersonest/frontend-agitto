@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { verifyPhoneCode, addPhoneAndSendOtp } from "@/lib/api/auth";
@@ -54,7 +54,7 @@ function VerifyPhoneInner() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="space-y-6" onSubmit={onSubmit}>
+          <form className="space-y-4" onSubmit={onSubmit}>
             <div className="flex justify-center">
               <InputOTP maxLength={6} value={value} onChange={setValue}>
                 <InputOTPGroup className="flex gap-5 sm:gap-6">
@@ -79,6 +79,9 @@ function VerifyPhoneInner() {
             </div>
             <Button type="submit" className="w-full" variant="accent">
               <Check size={16} /> Confirmar
+            </Button>
+            <Button asChild variant="secondary" className="w-full">
+              <a href="/events"><ArrowLeft size={16} /> Voltar</a>
             </Button>
           </form>
         </CardContent>

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { getMe } from "@/lib/api/auth";
 
@@ -15,7 +16,6 @@ export default function EventsPage() {
     (async () => {
       try {
         const me = await getMe();
-        // me.emailVerified is expected from backend
         setEmailVerified(Boolean((me as any).emailVerified));
         setPhoneVerified(Boolean((me as any).phoneVerified));
         setEmail((me as any).email ?? null);
@@ -24,7 +24,7 @@ export default function EventsPage() {
           return;
         }
       } catch {
-        // ignore
+        
       }
     })();
   }, [router]);
@@ -39,11 +39,24 @@ export default function EventsPage() {
           </div>
         )}
         {emailVerified === false && (
-          <div className="rounded-xl border bg-secondary p-4 text-sm">
-            Seu e-mail ainda não está verificado. <a href={email ? `/verify-email?email=${encodeURIComponent(email)}` : "/verify-email"} className="text-primary font-semibold hover:underline">Verificar agora</a>.
+          <div className="rounded-xl border p-4 text-sm bg-amber-50 border-amber-200">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={18} className="text-amber-700 mt-0.5" />
+              <div>
+                Seu e-mail não está verificado. Para criar ou interagir, confirme seu endereço.
+                {" "}
+                <a
+                  href={email ? `/verify-email?email=${encodeURIComponent(email)}` : "/verify-email"}
+                  className="font-semibold text-amber-800 underline-offset-4 hover:underline"
+                >
+                  Verificar agora
+                </a>
+                .
+              </div>
+            </div>
           </div>
         )}
-        {/* Conteúdo da lista de eventos entrará aqui */}
+        
       </Card>
     </div>
   );

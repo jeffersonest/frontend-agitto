@@ -53,7 +53,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-sm p-6 space-y-4">
+      <Card className="w-full max-w-md p-6 space-y-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Criar conta</h1>
           <p className="text-sm text-foreground/70">Preencha seus dados para começar.</p>
@@ -89,12 +89,10 @@ export default function RegisterPage() {
           <Button type="submit" className="w-full" variant="accent" disabled={loading}>
             <UserPlus size={16} /> {loading ? "Enviando..." : "Cadastrar"}
           </Button>
-        </form>
-        <div>
           <Button asChild variant="secondary" className="w-full">
             <a href="/login"><ArrowLeft size={16} /> Voltar ao login</a>
           </Button>
-        </div>
+        </form>
       </Card>
     </div>
   );

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { fromE164ToLocalDigits, maskBR, toE164BR } from "@/lib/phone/br";
 
 type Props = Omit<React.ComponentProps<typeof Input>, "type" | "onChange" | "value"> & {
-  value?: string; // E.164 value (e.g., +5599999999999) or empty
+  value?: string;
   onChange?: (e164: string) => void;
 };
 

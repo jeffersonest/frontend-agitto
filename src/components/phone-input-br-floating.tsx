@@ -33,6 +33,7 @@ export default function FloatingPhoneInputBR({ label, value, onChange, className
       <Input
         type="tel"
         inputMode="numeric"
+        id={inputId}
         className={cn("pl-16 peer placeholder-transparent", props.className)}
         value={display}
         onChange={handleChange}
@@ -52,4 +53,3 @@ export default function FloatingPhoneInputBR({ label, value, onChange, className
     </div>
   );
 }
-

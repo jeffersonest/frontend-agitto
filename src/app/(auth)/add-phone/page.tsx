@@ -10,7 +10,8 @@ import FloatingPhoneInputBR from "@/components/phone-input-br-floating";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { addPhoneAndSendOtp } from "@/lib/api/auth";
-import { Send } from "lucide-react";
+import { Send, ArrowLeft } from "lucide-react";
+import { getAccessToken } from "@/lib/api/http";
 
 const schema = z.object({ phone: z.string().regex(/^\+55\d{10,11}$/, "Informe um telefone válido com DDD") });
 
@@ -39,7 +40,7 @@ function AddPhoneInner() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-md space-y-4">
+      <Card className="w-full max-w-md space-y-3">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold">Verificar celular</h1>
           <p className="text-sm text-foreground/70">Informe seu número no formato E.164 para receber um código.</p>
@@ -57,6 +58,9 @@ function AddPhoneInner() {
           )}
           <Button type="submit" className="w-full" disabled={loading}>
             <Send size={16} /> {loading ? "Enviando..." : "Enviar código"}
+          </Button>
+          <Button asChild variant="secondary" className="w-full">
+            <a href={(typeof window !== "undefined" && getAccessToken()) ? "/events" : "/login"}><ArrowLeft size={16} /> Voltar</a>
           </Button>
         </form>
       </Card>

@@ -1,12 +1,22 @@
 import { http, setAccessToken } from "@/lib/api/http";
-
-// Email OTP endpoints are not implemented in the backend yet.
-export async function requestEmailCode(_email: string) {
-  return { ok: false, error: "Email verification not available" } as const;
+export async function requestEmailCode(email: string) {
+  await http("/auth/request-email", { method: "POST", body: { email } });
+  return { ok: true } as const;
 }
 
-export async function verifyEmailCode(_email: string, _code: string) {
-  return { ok: false, error: "Email verification not available" } as const;
+export async function verifyEmailCode(email: string, code: string) {
+  await http("/auth/verify-email", { method: "POST", body: { email, code } });
+  return { ok: true } as const;
+}
+
+export async function verifyEmailToken(token: string) {
+  try {
+    await http("/auth/verify-email", { method: "POST", body: { token } });
+    return { ok: true } as const;
+  } catch (_) {
+    await http(`/auth/verify-email?token=${encodeURIComponent(token)}`, { method: "GET" });
+    return { ok: true } as const;
+  }
 }
 
 export async function requestPhoneCode(phone: string) {

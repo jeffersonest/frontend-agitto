@@ -23,7 +23,7 @@ export function getAccessToken(): string | null {
 type HttpOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
-  auth?: boolean; // include bearer token
+  auth?: boolean;
   headers?: Record<string, string>;
 };
 
@@ -56,4 +56,3 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
   }
   return data as T;
 }
-
