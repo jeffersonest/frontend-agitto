@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { toast } from "sonner";
 import { verifyPhoneCode, addPhoneAndSendOtp } from "@/lib/api/auth";
@@ -76,7 +77,9 @@ function VerifyPhoneInner() {
                 Reenviar código
               </button>
             </div>
-            <Button type="submit" className="w-full" variant="accent">Confirmar</Button>
+            <Button type="submit" className="w-full" variant="accent">
+              <Check size={16} /> Confirmar
+            </Button>
           </form>
         </CardContent>
       </Card>

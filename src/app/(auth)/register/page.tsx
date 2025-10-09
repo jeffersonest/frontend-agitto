@@ -6,8 +6,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import FloatingTextField from "@/components/ui/floating-text-field";
+import { Mail, LockKeyhole, UserPlus, ArrowLeft } from "lucide-react";
 import { Controller } from "react-hook-form";
-import PhoneInputBR from "@/components/phone-input-br";
+import FloatingPhoneInputBR from "@/components/phone-input-br-floating";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { register as apiRegister } from "@/lib/api/auth";
@@ -66,12 +67,7 @@ export default function RegisterPage() {
           {form.formState.errors.name && (
             <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
           )}
-          <FloatingTextField
-            type="email"
-            label="E-mail"
-            leftIcon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v16H4z"></path><path d="m22 6-10 7L2 6"/></svg>}
-            {...form.register("email")}
-          />
+          <FloatingTextField type="email" label="E-mail" leftIcon={<Mail size={18} />} {...form.register("email")} />
           {form.formState.errors.email && (
             <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
           )}
@@ -79,21 +75,26 @@ export default function RegisterPage() {
             control={form.control}
             name="phone"
             render={({ field }) => (
-              <PhoneInputBR value={field.value} onChange={field.onChange} />
+              <FloatingPhoneInputBR label="Celular" value={field.value} onChange={field.onChange} />
             )}
           />
           {form.formState.errors.phone && (
             <p className="text-sm text-red-500">Informe um telefone válido</p>
           )}
-          <FloatingTextField togglePassword label="Senha (mín. 8)" {...form.register("password")} />
-          <FloatingTextField togglePassword label="Confirmar senha" {...form.register("confirm")} />
+          <FloatingTextField togglePassword label="Senha (mín. 8)" leftIcon={<LockKeyhole size={18} />} {...form.register("password")} />
+          <FloatingTextField togglePassword label="Confirmar senha" leftIcon={<LockKeyhole size={18} />} {...form.register("confirm")} />
           {form.formState.errors.confirm && (
             <p className="text-sm text-red-500">{form.formState.errors.confirm.message}</p>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Enviando..." : "Cadastrar"}
+          <Button type="submit" className="w-full" variant="accent" disabled={loading}>
+            <UserPlus size={16} /> {loading ? "Enviando..." : "Cadastrar"}
           </Button>
         </form>
+        <div>
+          <Button asChild variant="secondary" className="w-full">
+            <a href="/login"><ArrowLeft size={16} /> Voltar ao login</a>
+          </Button>
+        </div>
       </Card>
     </div>
   );

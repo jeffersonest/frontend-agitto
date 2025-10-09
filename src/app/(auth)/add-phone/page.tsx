@@ -6,10 +6,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Controller } from "react-hook-form";
-import PhoneInputBR from "@/components/phone-input-br";
+import FloatingPhoneInputBR from "@/components/phone-input-br-floating";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { addPhoneAndSendOtp } from "@/lib/api/auth";
+import { Send } from "lucide-react";
 
 const schema = z.object({ phone: z.string().regex(/^\+55\d{10,11}$/, "Informe um telefone válido com DDD") });
 
@@ -48,14 +49,14 @@ function AddPhoneInner() {
             control={form.control}
             name="phone"
             render={({ field }) => (
-              <PhoneInputBR value={field.value} onChange={field.onChange} />
+              <FloatingPhoneInputBR label="Celular" value={field.value} onChange={field.onChange} />
             )}
           />
           {form.formState.errors.phone && (
             <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Enviando..." : "Enviar código"}
+            <Send size={16} /> {loading ? "Enviando..." : "Enviar código"}
           </Button>
         </form>
       </Card>

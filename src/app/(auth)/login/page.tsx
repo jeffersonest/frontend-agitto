@@ -6,6 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import FloatingTextField from "@/components/ui/floating-text-field";
+import { Mail, Phone, LockKeyhole, LogIn, UserPlus } from "lucide-react";
 import PhoneInputBR from "@/components/phone-input-br";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -52,25 +53,24 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-6">
       <Card className="w-full max-w-md space-y-6">
         <div className="flex gap-2">
-          <Button variant={mode === "email" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("email")}>E-mail</Button>
-          <Button variant={mode === "phone" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("phone")}>Celular</Button>
+          <Button variant={mode === "email" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("email")}>
+            <Mail size={16} /> E-mail
+          </Button>
+          <Button variant={mode === "phone" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("phone")}>
+            <Phone size={16} /> Celular
+          </Button>
         </div>
         {mode === "email" ? (
           <form className="space-y-4" onSubmit={emailForm.handleSubmit(onSubmitEmail)}>
-            <FloatingTextField
-              type="email"
-              label="E-mail"
-              leftIcon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v16H4z"></path><path d="m22 6-10 7L2 6"/></svg>}
-              {...emailForm.register("email")}
-            />
+            <FloatingTextField type="email" label="E-mail" leftIcon={<Mail size={18} />} {...emailForm.register("email")} />
             {emailForm.formState.errors.email && (
               <p className="text-sm text-red-500">{emailForm.formState.errors.email.message}</p>
             )}
-            <FloatingTextField togglePassword label="Senha" {...emailForm.register("password")} />
+            <FloatingTextField togglePassword label="Senha" leftIcon={<LockKeyhole size={18} />} {...emailForm.register("password")} />
             {emailForm.formState.errors.password && (
               <p className="text-sm text-red-500">Informe uma senha válida</p>
             )}
-            <Button type="submit" className="w-full">Entrar</Button>
+            <Button type="submit" className="w-full"><LogIn size={16} /> Entrar</Button>
           </form>
         ) : (
           <form className="space-y-4" onSubmit={phoneForm.handleSubmit(onSubmitPhone)}>
@@ -84,13 +84,18 @@ export default function LoginPage() {
             {phoneForm.formState.errors.phone && (
               <p className="text-sm text-red-500">Informe um telefone válido</p>
             )}
-            <FloatingTextField togglePassword label="Senha" {...phoneForm.register("password")} />
+            <FloatingTextField togglePassword label="Senha" leftIcon={<LockKeyhole size={18} />} {...phoneForm.register("password")} />
             {phoneForm.formState.errors.password && (
               <p className="text-sm text-red-500">Informe uma senha válida</p>
             )}
-            <Button type="submit" className="w-full">Entrar</Button>
+            <Button type="submit" className="w-full"><LogIn size={16} /> Entrar</Button>
           </form>
         )}
+        <div className="pt-1">
+          <Button asChild variant="accent" className="w-full">
+            <a href="/register"><UserPlus size={16} /> Registrar</a>
+          </Button>
+        </div>
       </Card>
     </div>
   );
