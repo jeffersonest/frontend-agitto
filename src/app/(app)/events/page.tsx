@@ -5,6 +5,7 @@ import { useInfiniteEvents } from "@/lib/queries/events";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useRef } from "react";
+import EventCard from "@/components/events/event-card";
 
 export default function EventsPage() {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteEvents({ status: "PUBLISHED", take: 12 });
@@ -42,26 +43,17 @@ export default function EventsPage() {
           <>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {events.map((ev) => (
-                <Link key={ev.id} href={`/events/${ev.id}`} className="group relative rounded-2xl overflow-hidden border bg-secondary/30 hover:shadow-lg transition-shadow">
-                  <div
-                    className="absolute inset-0 bg-center bg-cover"
-                    style={{ backgroundImage: ev.coverImageUrl ? `url(${ev.coverImageUrl})` : "none" }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/30 to-black/50" />
-                  <div className="relative p-4 h-56 flex flex-col justify-end">
-                    <div className="mb-2">
-                      <span className="rounded-full text-white text-xs px-2 py-0.5 flex items-center gap-1" style={{ backgroundColor: categoryColor(categoryFromTags(ev.tags)) }}>
-                        <span>{categoryEmoji(categoryFromTags(ev.tags))}</span>
-                        <span>{categoryFromTags(ev.tags)}</span>
-                      </span>
-                    </div>
-                    <div className="bg-white/90 backdrop-blur rounded-xl p-3">
-                      <div className="font-medium line-clamp-1">{ev.title}</div>
-                      <div className="text-xs text-muted-foreground line-clamp-1">{ev.locationName || ev.locationAddress}</div>
-                      <div className="text-xs text-muted-foreground">{new Date(ev.startDate).toLocaleString()}</div>
-                    </div>
-                  </div>
-                </Link>
+                <EventCard
+                  key={ev.id}
+                  id={ev.id}
+                  title={ev.title}
+                  startDate={ev.startDate}
+                  locationName={ev.locationName}
+                  locationAddress={ev.locationAddress}
+                  coverImageUrl={ev.coverImageUrl}
+                  tags={ev.tags}
+                  attendeeCount={ev.attendeeCount}
+                />
               ))}
             </div>
             <div ref={sentinelRef} className="h-8" />
