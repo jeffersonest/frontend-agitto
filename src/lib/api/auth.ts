@@ -1,6 +1,6 @@
 import { http, setAccessToken } from "@/lib/api/http";
 export async function requestEmailCode(email: string) {
-  await http("/auth/request-email", { method: "POST", body: { email } });
+  await http("/auth/request-email-verification", { method: "POST", body: { email } });
   return { ok: true } as const;
 }
 

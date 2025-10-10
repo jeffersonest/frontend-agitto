@@ -8,6 +8,8 @@ import { type Notification } from "@/lib/api/notifications";
 import { useActiveNotifications, useReadNotifications, useMarkNotificationRead, useCompleteNotification, useMarkAllNotificationsRead, notificationKeys } from "@/lib/queries/notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatRelativeTime } from "@/lib/date";
+import { requestEmailCode } from "@/lib/api/auth";
+import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -104,14 +106,14 @@ export default function UserMenu() {
       <Dialog open={notifOpen} onOpenChange={setNotifOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Notificações</DialogTitle>
-            <DialogDescription>Alertas e avisos da sua conta.</DialogDescription>
+            <DialogTitle className="text-base">Notificações</DialogTitle>
+            <DialogDescription className="text-[13px]">Alertas e avisos da sua conta.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 max-h-[60vh] overflow-auto">
+          <div className="space-y-3 max-h-[60vh] overflow-auto">
             {active.length > 0 && (
               <div className="flex items-center justify-end pb-1">
                 <button
-                  className="text-primary font-semibold text-sm disabled:opacity-60"
+                  className="text-primary font-semibold text-[13px] disabled:opacity-60"
                   disabled={markAll.isPending}
                   onClick={() => markAll.mutate(undefined)}
                 >
@@ -120,21 +122,21 @@ export default function UserMenu() {
               </div>
             )}
             {active.length === 0 ? (
-              <div className="text-sm text-muted-foreground">Sem novas notificações.</div>
+              <div className="text-[13px] text-muted-foreground">Sem novas notificações.</div>
             ) : (
               active.map((n) => {
                 const isActivation = n.type === "EMAIL_VERIFICATION" || n.type === "PHONE_VERIFICATION";
                 return (
-                <div key={n.id} className="rounded-lg border p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="text-sm font-medium">{n.title}</div>
-                    <div className="text-xs text-muted-foreground whitespace-nowrap">{formatRelativeTime(n.createdAt)}</div>
+                <div key={n.id} className="rounded-lg border p-3.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="text-[13px] font-medium leading-tight">{n.title}</div>
+                    <div className="text-[11px] text-muted-foreground whitespace-nowrap">{formatRelativeTime(n.createdAt)}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground">{n.message}</div>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-1.5 text-[13px] text-foreground/75 leading-snug">{n.message}</div>
+                  <div className="mt-2 flex items-center gap-3">
                     <Link
-                      href={n.type === "PHONE_VERIFICATION" ? "/add-phone" : (n.type === "EMAIL_VERIFICATION" ? "/verify-email" : (n.actionUrl || "/events"))}
-                      className="text-primary font-semibold"
+                      href={n.type === "PHONE_VERIFICATION" ? "/add-phone" : (n.type === "EMAIL_VERIFICATION" ? (me?.email ? `/verify-email?email=${encodeURIComponent(me.email)}` : "/verify-email") : (n.actionUrl || "/events"))}
+                      className="text-primary font-semibold text-[13px]"
                       onClick={async () => {
                         if (!isActivation) {
                           try { await markRead.mutateAsync(n.id); } catch {}
@@ -144,10 +146,20 @@ export default function UserMenu() {
                     >
                       Abrir
                     </Link>
+                    {n.type === "EMAIL_VERIFICATION" && me?.email && (
+                      <button
+                        className="text-foreground/75 hover:underline text-[13px]"
+                        onClick={async () => {
+                          try { await requestEmailCode(me.email as string); toast.success("E-mail reenviado"); } catch (e: any) { toast.error(e?.message || "Falha ao reenviar"); }
+                        }}
+                      >
+                        Reenviar e-mail
+                      </button>
+                    )}
                     {!isActivation && (
                       <>
                         <button
-                          className="text-foreground/80 hover:underline"
+                          className="text-foreground/75 hover:underline text-[13px]"
                           onClick={async () => {
                             await markRead.mutateAsync(n.id);
                           }}
@@ -155,7 +167,7 @@ export default function UserMenu() {
                           Marcar como lida
                         </button>
                         <button
-                          className="text-destructive hover:underline ml-auto"
+                          className="text-destructive hover:underline ml-auto text-[13px]"
                           onClick={async () => {
                             await complete.mutateAsync(n.id);
                           }}
@@ -170,15 +182,15 @@ export default function UserMenu() {
             )}
             {read.length > 0 && (
               <div className="pt-2">
-                <div className="text-xs mb-1 text-muted-foreground">Lidas</div>
+                <div className="text-[11px] mb-1 text-muted-foreground">Lidas</div>
                 <div className="space-y-2">
                   {read.map((n) => (
                     <div key={n.id} className="rounded-lg border p-3 bg-secondary/50">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="text-sm font-medium">{n.title}</div>
-                        <div className="text-xs text-muted-foreground whitespace-nowrap">{formatRelativeTime(n.createdAt)}</div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="text-[13px] font-medium leading-tight">{n.title}</div>
+                        <div className="text-[11px] text-muted-foreground whitespace-nowrap">{formatRelativeTime(n.createdAt)}</div>
                       </div>
-                      <div className="text-sm text-muted-foreground">{n.message}</div>
+                      <div className="text-[13px] text-foreground/75 leading-snug">{n.message}</div>
                     </div>
                   ))}
                 </div>

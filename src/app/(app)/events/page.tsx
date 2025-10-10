@@ -4,13 +4,15 @@ import { PageHeader } from "@/components/page-header";
 import { useInfiniteEvents } from "@/lib/queries/events";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getMe } from "@/lib/api/auth";
 import EventCard from "@/components/events/event-card";
 
 export default function EventsPage() {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteEvents({ status: "PUBLISHED", take: 12 });
   const events = useMemo(() => (data?.pages || []).flatMap((p) => p.events), [data]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [myId, setMyId] = useState<string | null>(null);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -22,6 +24,10 @@ export default function EventsPage() {
     io.observe(el);
     return () => io.disconnect();
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  useEffect(() => {
+    getMe().then((m: any) => setMyId(m?.id ?? null)).catch(() => setMyId(null));
+  }, []);
   return (
     <div className="min-h-screen p-6 flex items-start justify-center">
       <Card className="w-full max-w-3xl p-8 space-y-6">
@@ -53,6 +59,7 @@ export default function EventsPage() {
                   coverImageUrl={ev.coverImageUrl}
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
+                  isOwner={myId ? ev.ownerId === myId : false}
                 />
               ))}
             </div>

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
-import { MapPin, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { MapPin, Star, Pencil } from "lucide-react";
 import { categoryColor, categoryEmoji, categoryFromTags, categoryTint } from "@/lib/events/category";
 import { formatEventDate, formatLocationShort } from "@/lib/events/format";
 
@@ -13,9 +14,11 @@ type Props = {
   coverImageUrl?: string | null;
   tags?: string[];
   attendeeCount?: number;
+  isOwner?: boolean;
 };
 
-export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount }: Props) {
+export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, isOwner }: Props) {
+  const router = useRouter();
   const cat = categoryFromTags(tags);
   const color = categoryColor(cat);
   const tint = categoryTint(cat, 0.25);
@@ -31,8 +34,23 @@ export default function EventCard({ id, title, startDate, locationName, location
           <span>{cat}</span>
         </span>
       </div>
-      <div className="absolute top-3 right-3">
-        <button type="button" className="size-8 rounded-full bg-white/80 text-foreground grid place-items-center hover:bg-white transition-colors">
+      <div className="absolute top-3 right-3 flex items-center gap-2">
+        {isOwner && (
+          <button
+            type="button"
+            title="Editar"
+            className="size-8 rounded-full bg-white/80 text-foreground grid place-items-center hover:bg-white transition-colors"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/events/${id}/edit`); }}
+          >
+            <Pencil size={16} />
+          </button>
+        )}
+        <button
+          type="button"
+          className="size-8 rounded-full bg-white/80 text-foreground grid place-items-center hover:bg-white transition-colors"
+          aria-label="Salvar"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); /* futuro: toggle favorito */ }}
+        >
           <Star size={16} />
         </button>
       </div>
@@ -54,4 +72,3 @@ export default function EventCard({ id, title, startDate, locationName, location
     </Link>
   );
 }
-
