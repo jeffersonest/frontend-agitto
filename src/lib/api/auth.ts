@@ -13,7 +13,7 @@ export async function verifyEmailToken(token: string) {
   try {
     await http("/auth/verify-email", { method: "POST", body: { token } });
     return { ok: true } as const;
-  } catch (_) {
+  } catch {
     await http(`/auth/verify-email?token=${encodeURIComponent(token)}`, { method: "GET" });
     return { ok: true } as const;
   }
@@ -29,15 +29,15 @@ export async function verifyPhoneCode(phone: string, code: string) {
   return { ok: true } as const;
 }
 
+type AuthTokens = { accessToken: string; refreshToken?: string };
+
 export async function register(payload: {
   name: string;
   email: string;
   password: string;
 }) {
-  const data = await http<any>("/auth/register", { method: "POST", body: payload });
-  if (data && typeof data === "object" && "accessToken" in data) {
-    setAccessToken((data as any).accessToken);
-  }
+  const data = await http<AuthTokens>("/auth/register", { method: "POST", body: payload });
+  if (data && data.accessToken) setAccessToken(data.accessToken);
   return { ok: true } as const;
 }
 
@@ -46,7 +46,7 @@ export async function loginWithPassword({
   email,
   password,
 }: { phone?: string; email?: string; password: string }) {
-  const data = await http<{ accessToken: string; refreshToken: string }>(
+  const data = await http<AuthTokens>(
     "/auth/login",
     { method: "POST", body: { phone, email, password } }
   );

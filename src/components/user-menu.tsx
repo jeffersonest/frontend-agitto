@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { getMe } from "@/lib/api/auth";
 import { logout } from "@/lib/auth/logout";
 import { cn } from "@/lib/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { type Notification } from "@/lib/api/notifications";
+import { useActiveNotifications, useReadNotifications, useMarkNotificationRead, useCompleteNotification, useMarkAllNotificationsRead, notificationKeys } from "@/lib/queries/notifications";
+import { useQueryClient } from "@tanstack/react-query";
+import { formatRelativeTime } from "@/lib/date";
+import Link from "next/link";
+import Image from "next/image";
 
 type Me = { name?: string; email?: string; avatarUrl?: string } | null;
 
@@ -10,10 +17,18 @@ export default function UserMenu() {
   const [me, setMe] = useState<Me>(null);
   const [open, setOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const qc = useQueryClient();
+  const { data: active = [] as Notification[] } = useActiveNotifications();
+  const { data: read = [] as Notification[] } = useReadNotifications();
+  const markRead = useMarkNotificationRead();
+  const complete = useCompleteNotification();
+  const markAll = useMarkAllNotificationsRead();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getMe().then((data: any) => setMe(data ?? null)).catch(() => setMe(null));
+    getMe()
+      .then((data) => setMe((data as Partial<{ name: string; email: string; avatarUrl: string }>) as Me ?? null))
+      .catch(() => setMe(null));
   }, []);
 
   useEffect(() => {
@@ -27,6 +42,11 @@ export default function UserMenu() {
 
   const initial = (me?.name || me?.email || "?").trim().charAt(0).toUpperCase();
 
+  useEffect(() => {
+    if (!notifOpen) return;
+    qc.invalidateQueries({ queryKey: notificationKeys.active() });
+  }, [notifOpen, qc]);
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -36,11 +56,13 @@ export default function UserMenu() {
         aria-expanded={open}
       >
         <div className="size-8 rounded-full bg-primary/10 text-primary grid place-items-center font-semibold relative">
-          {(me as any)?.emailVerified === false && (
-            <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-amber-400 ring-2 ring-background" />
+          {active.length > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-amber-400 text-amber-950 text-[10px] font-semibold grid place-items-center ring-2 ring-background">
+              {active.length > 9 ? "9+" : String(active.length)}
+            </span>
           )}
           {me?.avatarUrl ? (
-            <img src={me.avatarUrl} alt="avatar" className="size-8 rounded-full object-cover" />
+            <Image src={me.avatarUrl} alt="avatar" width={32} height={32} className="rounded-full object-cover" />
           ) : (
             <span>{initial}</span>
           )}
@@ -67,8 +89,10 @@ export default function UserMenu() {
           <a href="/events" className="block rounded-md px-3 py-2 text-sm hover:bg-secondary">Eventos</a>
           <button onClick={() => setNotifOpen(true)} className="block w-full text-left rounded-md px-3 py-2 text-sm hover:bg-secondary">
             Notificações
-            {(me as any)?.emailVerified === false && (
-              <span className="ml-2 inline-block align-middle size-2.5 rounded-full bg-amber-400" />
+            {active.length > 0 && (
+              <span className="ml-2 inline-flex items-center rounded-full bg-amber-400 text-amber-950 px-1.5 h-4 text-[10px] font-semibold">
+                {active.length > 9 ? "9+" : String(active.length)}
+              </span>
             )}
           </button>
           <a href="/_settings" className="block rounded-md px-3 py-2 text-sm hover:bg-secondary">Configurações</a>
@@ -77,38 +101,92 @@ export default function UserMenu() {
           </button>
         </div>
       )}
-
-      {notifOpen && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setNotifOpen(false)} />
-          <div className="bg-background rounded-xl border shadow-lg p-6 w-full max-w-lg mx-auto mt-24 relative z-10">
-            <div className="text-lg font-semibold mb-2">Notificações</div>
-            <div className="space-y-3">
-              {me && me.email && (me as any).emailVerified === false ? (
-                <div className="rounded-lg border p-3">
-                  <div className="font-medium">Verifique seu e-mail</div>
-                  <div className="text-sm text-muted-foreground">Confirme {me.email} para liberar criação e interação.</div>
-                  <div className="mt-2 flex gap-2">
-                    <button
+      <Dialog open={notifOpen} onOpenChange={setNotifOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Notificações</DialogTitle>
+            <DialogDescription>Alertas e avisos da sua conta.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-auto">
+            {active.length > 0 && (
+              <div className="flex items-center justify-end pb-1">
+                <button
+                  className="text-primary font-semibold text-sm disabled:opacity-60"
+                  disabled={markAll.isPending}
+                  onClick={() => markAll.mutate(undefined)}
+                >
+                  Marcar todas como lidas
+                </button>
+              </div>
+            )}
+            {active.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Sem novas notificações.</div>
+            ) : (
+              active.map((n) => {
+                const isActivation = n.type === "EMAIL_VERIFICATION" || n.type === "PHONE_VERIFICATION";
+                return (
+                <div key={n.id} className="rounded-lg border p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="text-sm font-medium">{n.title}</div>
+                    <div className="text-xs text-muted-foreground whitespace-nowrap">{formatRelativeTime(n.createdAt)}</div>
+                  </div>
+                  <div className="text-sm text-muted-foreground">{n.message}</div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Link
+                      href={n.type === "PHONE_VERIFICATION" ? "/add-phone" : (n.type === "EMAIL_VERIFICATION" ? "/verify-email" : (n.actionUrl || "/events"))}
                       className="text-primary font-semibold"
-                      onClick={() => {
-                        import("@/lib/api/auth").then(({ requestEmailCode }) => requestEmailCode(me.email || ""));
+                      onClick={async () => {
+                        if (!isActivation) {
+                          try { await markRead.mutateAsync(n.id); } catch {}
+                        }
+                        setNotifOpen(false);
                       }}
                     >
-                      Reenviar e-mail
-                    </button>
+                      Abrir
+                    </Link>
+                    {!isActivation && (
+                      <>
+                        <button
+                          className="text-foreground/80 hover:underline"
+                          onClick={async () => {
+                            await markRead.mutateAsync(n.id);
+                          }}
+                        >
+                          Marcar como lida
+                        </button>
+                        <button
+                          className="text-destructive hover:underline ml-auto"
+                          onClick={async () => {
+                            await complete.mutateAsync(n.id);
+                          }}
+                        >
+                          Remover
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="text-sm text-muted-foreground">Sem novas notificações.</div>
-              )}
-            </div>
-            <div className="mt-4 text-right">
-              <button className="text-primary font-semibold" onClick={() => setNotifOpen(false)}>Fechar</button>
-            </div>
+              )})
+            )}
+            {read.length > 0 && (
+              <div className="pt-2">
+                <div className="text-xs mb-1 text-muted-foreground">Lidas</div>
+                <div className="space-y-2">
+                  {read.map((n) => (
+                    <div key={n.id} className="rounded-lg border p-3 bg-secondary/50">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-sm font-medium">{n.title}</div>
+                        <div className="text-xs text-muted-foreground whitespace-nowrap">{formatRelativeTime(n.createdAt)}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">{n.message}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

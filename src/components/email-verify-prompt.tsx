@@ -13,10 +13,11 @@ export default function EmailVerifyPrompt() {
     let mounted = true;
     const flag = typeof window !== "undefined" ? sessionStorage.getItem("agitto:emailPromptShown") : null;
     getMe()
-      .then((me: any) => {
+      .then((me) => {
+        const m = me as Partial<{ email: string; emailVerified: boolean }>;
         if (!mounted) return;
-        const notVerified = me && me.email && me.emailVerified === false;
-        setEmail(me?.email || "");
+        const notVerified = m && m.email && m.emailVerified === false;
+        setEmail(m?.email || "");
         if (notVerified && !flag) {
           setOpen(true);
           try { sessionStorage.setItem("agitto:emailPromptShown", "1"); } catch {}
@@ -53,4 +54,3 @@ export default function EmailVerifyPrompt() {
     </Dialog>
   );
 }
-

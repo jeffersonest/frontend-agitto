@@ -2,10 +2,10 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getAccessToken } from "@/lib/api/http";
 import { verifyEmailToken, requestEmailCode } from "@/lib/api/auth";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 function VerifyEmailInner() {
   const sp = useSearchParams();
@@ -28,11 +28,37 @@ function VerifyEmailInner() {
           setStatus("error");
         }
       })
-      .catch((e: any) => {
-        setError(e?.message || "Falha ao verificar e-mail");
+      .catch((e: unknown) => {
+        const msg = typeof e === "object" && e && "message" in e ? String((e as { message?: string }).message) : "Falha ao verificar e-mail";
+        setError(msg);
         setStatus("error");
       });
   }, [token, isLoggedIn, router]);
+
+  const Actions = (
+    <>
+      {status === "success" ? (
+        isLoggedIn ? (
+          <Link href="/events" className="text-primary font-semibold hover:underline">Ir para eventos</Link>
+        ) : (
+          <Link href="/login" className="text-primary font-semibold hover:underline">Ir para login</Link>
+        )
+      ) : isLoggedIn ? (
+        email ? (
+          <Button
+            variant="secondary"
+            onClick={async () => {
+              await requestEmailCode(email);
+            }}
+          >
+            Reenviar e-mail
+          </Button>
+        ) : null
+      ) : (
+        <Link href="/login" className="text-primary font-semibold hover:underline">Voltar ao login</Link>
+      )}
+    </>
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
@@ -54,28 +80,10 @@ function VerifyEmailInner() {
           {status === "error" && (
             <div className="text-sm text-destructive">{error || "Link inválido ou expirado."}</div>
           )}
-          {status === "success" ? (
-            isLoggedIn ? (
-              <Link href="/events" className="text-primary font-semibold hover:underline">Ir para eventos</Link>
-            ) : (
-              <Link href="/login" className="text-primary font-semibold hover:underline">Ir para login</Link>
-            )
-          ) : isLoggedIn ? (
-            <div className="flex items-center justify-center gap-3">
-              {email && (
-                <Button
-                  variant="secondary"
-                  onClick={async () => {
-                    await requestEmailCode(email);
-                  }}
-                >
-                  Reenviar e-mail
-                </Button>
-              )}
-            </div>
-          ) : (
-            <Link href="/login" className="text-primary font-semibold hover:underline">Voltar ao login</Link>
-          )}
+          <div className="flex items-center justify-center gap-3">{Actions}</div>
+          <div className="flex items-center justify-center">
+            <Button type="button" variant="secondary" onClick={() => router.replace(isLoggedIn ? "/events" : "/login")}>Fechar</Button>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -34,22 +34,13 @@ export default function FloatingPhoneInputBR({ label, value, onChange, className
         type="tel"
         inputMode="numeric"
         id={inputId}
-        className={cn("pl-16 peer placeholder-transparent", props.className)}
+        className={cn("pl-16", className)}
         value={display}
         onChange={handleChange}
-        placeholder=" "
+        placeholder={label}
+        aria-label={label}
         {...props}
       />
-      <label
-        htmlFor={inputId}
-        className={cn(
-          "pointer-events-none absolute top-1/2 -translate-y-1/2 left-16 text-muted-foreground transition-all",
-          "peer-focus:top-2 peer-focus:text-xs peer-focus:text-foreground",
-          "peer-[&:not(:placeholder-shown)]:top-2 peer-[&:not(:placeholder-shown)]:text-xs"
-        )}
-      >
-        {label}
-      </label>
     </div>
   );
 }

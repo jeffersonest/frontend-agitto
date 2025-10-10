@@ -161,3 +161,9 @@
     cursor: pointer;
   }
 }
+
+.theme-primary-lavender {
+  --primary: var(--lavender);
+  --primary-600: var(--lavender-600);
+  --ring: var(--lavender);
+}

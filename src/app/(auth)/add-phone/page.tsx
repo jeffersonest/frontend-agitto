@@ -1,6 +1,6 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,6 +20,14 @@ function AddPhoneInner() {
   const prefill = sp.get("prefill") || "";
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const backTargetRef = useRef<string>("/login");
+  useEffect(() => {
+    try {
+      backTargetRef.current = getAccessToken() ? "/events" : "/login";
+    } catch {
+      backTargetRef.current = "/login";
+    }
+  }, []);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { phone: prefill },
@@ -31,8 +39,9 @@ function AddPhoneInner() {
       await addPhoneAndSendOtp(values.phone);
       toast.success("Código enviado por SMS");
       router.replace(`/verify-phone?phone=${encodeURIComponent(values.phone)}`);
-    } catch (e: any) {
-      toast.error(e?.message || "Falha ao enviar código");
+    } catch (e: unknown) {
+      const msg = typeof e === "object" && e && "message" in e ? String((e as { message?: string }).message) : "Falha ao enviar código";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -59,8 +68,8 @@ function AddPhoneInner() {
           <Button type="submit" className="w-full" disabled={loading}>
             <Send size={16} /> {loading ? "Enviando..." : "Enviar código"}
           </Button>
-          <Button asChild variant="secondary" className="w-full">
-            <a href={(typeof window !== "undefined" && getAccessToken()) ? "/events" : "/login"}><ArrowLeft size={16} /> Voltar</a>
+          <Button type="button" variant="secondary" className="w-full" onClick={() => router.replace(backTargetRef.current)}>
+            <ArrowLeft size={16} /> Voltar
           </Button>
         </form>
       </Card>

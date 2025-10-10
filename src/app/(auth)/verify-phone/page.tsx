@@ -4,10 +4,10 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowLeft } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { verifyPhoneCode, addPhoneAndSendOtp } from "@/lib/api/auth";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 function VerifyPhoneInner() {
   const sp = useSearchParams();
@@ -35,7 +35,7 @@ function VerifyPhoneInner() {
         setValue("");
         toast.success("Código reenviado");
       }
-    } catch (e) {
+    } catch {
       toast.error("Falha ao reenviar código");
     } finally {
       setResending(false);
@@ -68,21 +68,14 @@ function VerifyPhoneInner() {
               </InputOTP>
             </div>
             <div className="text-center">
-              <button
-                type="button"
-                onClick={onResend}
-                disabled={resending}
-                className="text-primary font-semibold disabled:opacity-60"
-              >
+              <button type="button" onClick={onResend} disabled={resending} className="text-primary font-semibold disabled:opacity-60">
                 Reenviar código
               </button>
             </div>
             <Button type="submit" className="w-full" variant="accent">
               <Check size={16} /> Confirmar
             </Button>
-            <Button asChild variant="secondary" className="w-full">
-              <a href="/events"><ArrowLeft size={16} /> Voltar</a>
-            </Button>
+            <Button type="button" variant="secondary" className="w-full" onClick={() => router.replace("/events")}>Fechar</Button>
           </form>
         </CardContent>
       </Card>

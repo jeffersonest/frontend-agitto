@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/button";
 import FloatingTextField from "@/components/ui/floating-text-field";
 import { Mail, Phone, LockKeyhole, LogIn, UserPlus } from "lucide-react";
 import FloatingPhoneInputBR from "@/components/phone-input-br-floating";
-import { Card } from "@/components/ui/card";
+import AuthSplitScreen from "@/components/auth-split-screen";
 import { toast } from "sonner";
-import { loginWithPassword, getMe } from "@/lib/api/auth";
+import { loginWithPassword } from "@/lib/api/auth";
+import { useQueryClient } from "@tanstack/react-query";
 
 const emailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
 const phoneSchema = z.object({ phone: z.string().regex(/^\+55\d{10,11}$/), password: z.string().min(6) });
 
 export default function LoginPage() {
+  const qc = useQueryClient();
   const [mode, setMode] = useState<"email" | "phone">("email");
   const router = useRouter();
   const emailForm = useForm<z.infer<typeof emailSchema>>({ resolver: zodResolver(emailSchema), defaultValues: { email: "", password: "" } });
@@ -25,10 +27,9 @@ export default function LoginPage() {
     try {
       const res = await loginWithPassword({ email: values.email, password: values.password });
       if (res.ok) {
-        const me = await getMe();
-        const phoneVerified = Boolean((me as any).phoneVerified);
+        qc.invalidateQueries({ queryKey: ["notifications", "active"] });
         toast.success("Login realizado");
-        router.replace(phoneVerified ? "/events" : "/add-phone");
+        router.replace("/events");
       }
     } catch {
       toast.error("Credenciais inválidas");
@@ -39,10 +40,9 @@ export default function LoginPage() {
     try {
       const res = await loginWithPassword({ phone: values.phone, password: values.password });
       if (res.ok) {
-        const me = await getMe();
-        const phoneVerified = Boolean((me as any).phoneVerified);
+        qc.invalidateQueries({ queryKey: ["notifications", "active"] });
         toast.success("Login realizado");
-        router.replace(phoneVerified ? "/events" : "/add-phone");
+        router.replace("/events");
       }
     } catch {
       toast.error("Credenciais inválidas");
@@ -50,17 +50,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-md space-y-3">
-        <div className="flex gap-2">
-          <Button variant={mode === "email" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("email")}>
-            <Mail size={16} /> E-mail
-          </Button>
-          <Button variant={mode === "phone" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("phone")}>
-            <Phone size={16} /> Celular
-          </Button>
-        </div>
-        {mode === "email" ? (
+    <div className="">
+      <AuthSplitScreen
+        leftTitle="Bem-vindo de volta"
+        leftSubtitle="Acesse sua conta para continuar."
+        tone="teal"
+        leftCta={{ href: "/register", label: "Registrar", icon: <UserPlus size={16} /> }}
+      >
+        <div className="mt-4 space-y-4">
+          <div className="flex gap-2">
+            <Button variant={mode === "email" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("email")}>
+              <Mail size={16} /> E-mail
+            </Button>
+            <Button variant={mode === "phone" ? "default" : "secondary"} className="w-1/2" onClick={() => setMode("phone")}>
+              <Phone size={16} /> Celular
+            </Button>
+          </div>
+          {mode === "email" ? (
           <form className="space-y-4" onSubmit={emailForm.handleSubmit(onSubmitEmail)}>
             <FloatingTextField type="email" label="E-mail" leftIcon={<Mail size={18} />} {...emailForm.register("email")} />
             {emailForm.formState.errors.email && (
@@ -71,34 +77,28 @@ export default function LoginPage() {
               <p className="text-sm text-red-500">Informe uma senha válida</p>
             )}
             <Button type="submit" className="w-full"><LogIn size={16} /> Entrar</Button>
-            <Button asChild variant="accent" className="w-full">
-              <a href="/register"><UserPlus size={16} /> Registrar</a>
-            </Button>
           </form>
         ) : (
           <form className="space-y-4" onSubmit={phoneForm.handleSubmit(onSubmitPhone)}>
-            <Controller
-              control={phoneForm.control}
-              name="phone"
-              render={({ field }) => (
-                <FloatingPhoneInputBR label="Celular" value={field.value} onChange={field.onChange} />
+              <Controller
+                control={phoneForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FloatingPhoneInputBR label="Celular" value={field.value} onChange={field.onChange} />
+                )}
+              />
+              {phoneForm.formState.errors.phone && (
+                <p className="text-sm text-red-500">Informe um telefone válido</p>
               )}
-            />
-            {phoneForm.formState.errors.phone && (
-              <p className="text-sm text-red-500">Informe um telefone válido</p>
-            )}
-            <FloatingTextField togglePassword label="Senha" leftIcon={<LockKeyhole size={18} />} {...phoneForm.register("password")} />
-            {phoneForm.formState.errors.password && (
-              <p className="text-sm text-red-500">Informe uma senha válida</p>
-            )}
-            <Button type="submit" className="w-full"><LogIn size={16} /> Entrar</Button>
-            <Button asChild variant="accent" className="w-full">
-              <a href="/register"><UserPlus size={16} /> Registrar</a>
-            </Button>
-          </form>
-        )}
-        
-      </Card>
+              <FloatingTextField togglePassword label="Senha" leftIcon={<LockKeyhole size={18} />} {...phoneForm.register("password")} />
+              {phoneForm.formState.errors.password && (
+                <p className="text-sm text-red-500">Informe uma senha válida</p>
+              )}
+              <Button type="submit" className="w-full"><LogIn size={16} /> Entrar</Button>
+            </form>
+          )}
+        </div>
+      </AuthSplitScreen>
     </div>
   );
 }
