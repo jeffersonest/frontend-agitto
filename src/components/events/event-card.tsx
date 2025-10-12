@@ -25,7 +25,7 @@ export default function EventCard({ id, title, startDate, locationName, location
   const dateText = formatEventDate(startDate);
   const localText = formatLocationShort(locationName || undefined, locationAddress || undefined);
   return (
-    <Link href={`/events/${id}`} className="group relative rounded-2xl overflow-hidden border bg-secondary/30 hover:shadow-lg transition-shadow">
+    <Link href={`/events/${id}`} className="group relative rounded-2xl overflow-hidden border-transparent ring-1 ring-black/5 bg-secondary/20 backdrop-blur hover:shadow-md transition-shadow">
       <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: coverImageUrl ? `url(${coverImageUrl})` : "none" }} />
       <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5)), ${tint}` }} />
       <div className="absolute top-3 left-3">

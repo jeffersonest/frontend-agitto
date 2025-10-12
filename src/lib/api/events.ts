@@ -128,3 +128,24 @@ export async function listLiveMap(params: Record<string, string | number | undef
   const qs = q.toString();
   return http<{ markers: any[]; total: number }>(`/events/live-map${qs ? `?${qs}` : ""}`, { method: "GET" });
 }
+
+export interface DiscoverListResponse {
+  events: EventEntity[];
+  pagination: { skip: number; take: number; hasMore: boolean };
+}
+
+export async function listPopularWeek(params: { skip?: number; take?: number } = {}) {
+  const q = new URLSearchParams();
+  if (typeof params.skip === "number") q.append("skip", String(params.skip));
+  if (typeof params.take === "number") q.append("take", String(params.take));
+  const qs = q.toString();
+  return http<DiscoverListResponse>(`/events/popular/week${qs ? `?${qs}` : ""}`, { method: "GET" });
+}
+
+export async function listTrending(params: { skip?: number; take?: number } = {}) {
+  const q = new URLSearchParams();
+  if (typeof params.skip === "number") q.append("skip", String(params.skip));
+  if (typeof params.take === "number") q.append("take", String(params.take));
+  const qs = q.toString();
+  return http<DiscoverListResponse>(`/events/trending${qs ? `?${qs}` : ""}`, { method: "GET" });
+}

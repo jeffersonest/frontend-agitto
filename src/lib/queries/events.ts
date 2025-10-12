@@ -1,6 +1,6 @@
 "use client";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createEvent, deleteEvent, getEvent, listEvents, type CreateEventDto, type EventListResponse, type UpdateEventDto, updateEvent, uploadEventCover } from "@/lib/api/events";
+import { createEvent, deleteEvent, getEvent, listEvents, listLiveMap, listPopularWeek, listTrending, type CreateEventDto, type EventListResponse, type UpdateEventDto, updateEvent, uploadEventCover } from "@/lib/api/events";
 
 export const eventKeys = {
   all: ["events"] as const,
@@ -64,5 +64,35 @@ export function useUploadEventCover(id: string) {
   return useMutation({
     mutationFn: (file: File) => uploadEventCover(id, file),
     onSuccess: () => qc.invalidateQueries({ queryKey: eventKeys.detail(id) }),
+  });
+}
+
+export function useLiveMap(params?: { city?: string }) {
+  const q = params?.city ? { city: params.city } : {};
+  return useQuery({
+    queryKey: ["events", "live-map", q],
+    queryFn: () => listLiveMap(q),
+  });
+}
+
+export function usePopularWeek(params?: { skip?: number; take?: number }) {
+  return useQuery({
+    queryKey: ["events", "popular-week", params ?? {}],
+    queryFn: () => listPopularWeek(params || {}),
+    staleTime: 60_000 * 3,
+  });
+}
+
+export function useTrendingInfinite(params?: { take?: number }) {
+  const take = params?.take ?? 20;
+  return useInfiniteQuery({
+    queryKey: ["events", "trending", { take }],
+    queryFn: ({ pageParam }) => listTrending({ skip: pageParam?.skip ?? 0, take }),
+    initialPageParam: { skip: 0, take },
+    getNextPageParam: (last) => {
+      if (!last.pagination.hasMore) return undefined;
+      return { skip: (last.pagination.skip ?? 0) + (last.pagination.take ?? take), take };
+    },
+    staleTime: 60_000 * 3,
   });
 }
