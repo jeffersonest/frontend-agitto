@@ -162,6 +162,18 @@
   }
 }
 
+/* Leaflet tooltip styling for live map */
+.leaflet-tooltip.agitto-map-tip {
+  background: color-mix(in oklab, var(--background) 92%, white 8%);
+  color: var(--foreground);
+  border: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  padding: 8px 10px;
+  backdrop-filter: blur(6px);
+}
+.leaflet-tooltip.agitto-map-tip:before { display: none; }
+
 .theme-primary-lavender {
   --primary: var(--lavender);
   --primary-600: var(--lavender-600);

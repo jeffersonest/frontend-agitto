@@ -55,19 +55,24 @@ export default function EventCard({ id, title, startDate, locationName, location
           <Star size={16} />
         </button>
       </div>
-      <div className="relative p-4 h-64 flex flex-col justify-end">
-        <div className="bg-white/95 backdrop-blur rounded-xl p-3 shadow-sm">
-          <div className="font-semibold text-sm line-clamp-1">{title}</div>
-          {dateText && <div className="text-xs text-muted-foreground mt-1">{dateText}</div>}
-          {localText && (
-            <div className="mt-2 inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white/70">
+      <div className="relative p-4 h-72 flex flex-col justify-end min-h-36">
+        <div className="bg-white/95 backdrop-blur rounded-xl p-3 shadow-sm min-h-[144px] flex flex-col">
+          <div>
+            <div className="font-semibold text-sm line-clamp-1">{title}</div>
+            {dateText && <div className="text-xs text-muted-foreground mt-1">{dateText}</div>}
+          </div>
+          <div className="mt-auto">
+            <div className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-white/70 ${localText ? "" : "opacity-0"}`}>
               <MapPin size={14} className="text-[color:var(--primary)]" />
-              <span className="line-clamp-1">{localText}</span>
+              <span className="line-clamp-1">{localText || "Local"}</span>
             </div>
-          )}
-          {typeof attendeeCount === "number" && (
-            <div className="mt-2 text-xs text-muted-foreground">+{attendeeCount} pessoas vão</div>
-          )}
+            {(() => {
+              const count = typeof attendeeCount === "number" ? attendeeCount : 0;
+              return (
+                <div className={`mt-2 text-xs text-muted-foreground ${count < 1 ? "opacity-0" : ""}`}>+{count} pessoas vão</div>
+              );
+            })()}
+          </div>
         </div>
       </div>
     </Link>

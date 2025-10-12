@@ -67,8 +67,8 @@ export function useUploadEventCover(id: string) {
   });
 }
 
-export function useLiveMap(params?: { city?: string }) {
-  const q = params?.city ? { city: params.city } : {};
+export function useLiveMap(params?: { locationCity?: string }) {
+  const q = params?.locationCity ? { locationCity: params.locationCity } : {};
   return useQuery({
     queryKey: ["events", "live-map", q],
     queryFn: () => listLiveMap(q),

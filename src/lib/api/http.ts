@@ -38,21 +38,42 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
     const token = getAccessToken();
     if (token) headers["Authorization"] = `Bearer ${token}`;
   }
+  async function doFetch(currentHeaders: Record<string, string>) {
+    const response = await fetch(url, {
+      method: opts.method || (opts.body ? "POST" : "GET"),
+      headers: currentHeaders,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      credentials: "include",
+      cache: "no-store",
+    });
+    const isJson = (response.headers.get("content-type") || "").includes("application/json");
+    const payload = isJson ? await response.json().catch(() => undefined) : undefined;
+    return { response, payload } as const;
+  }
 
-  const res = await fetch(url, {
-    method: opts.method || (opts.body ? "POST" : "GET"),
-    headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-    credentials: "include",
-    cache: "no-store",
-  });
+  let { response, payload } = await doFetch(headers);
+  if (response.status === 401 && opts.auth) {
+    try {
+      const refreshRes = await fetch(`${base}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      const refreshData = await refreshRes.json().catch(() => undefined);
+      if (refreshRes.ok) {
+        const nextToken = (refreshData && (refreshData.accessToken || refreshData.token)) as string | undefined;
+        if (nextToken) {
+          setAccessToken(nextToken);
+          headers["Authorization"] = `Bearer ${nextToken}`;
+          ({ response, payload } = await doFetch(headers));
+        }
+      }
+    } catch {}
+  }
 
-  const isJson = (res.headers.get("content-type") || "").includes("application/json");
-  const data = isJson ? await res.json().catch(() => undefined) : undefined;
-
-  if (!res.ok) {
-    const message = (data && (data.message || data.error)) || res.statusText;
+  if (!response.ok) {
+    const message = (payload && (payload.message || payload.error)) || response.statusText;
     throw new Error(Array.isArray(message) ? message.join(", ") : String(message));
   }
-  return data as T;
+  return payload as T;
 }

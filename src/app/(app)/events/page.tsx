@@ -48,15 +48,15 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen">
       <div
-        className="absolute inset-x-0 top-0 h-72 sm:h-96 -z-10"
+        className="absolute inset-x-0 top-0 h-72 sm:h-96 -z-10 pointer-events-none"
         style={{
-          background: "linear-gradient(135deg, var(--primary-tint-1), rgba(167,139,250,0.25))",
-          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)",
-          maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)",
+          background: "linear-gradient(135deg, var(--primary-tint-1), rgba(167,139,250,0.22))",
+          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)",
+          maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)",
         }}
       />
       <div className="relative w-full pt-16">
-        <div className="mx-auto max-w-6xl px-6">
+        <div className="mx-auto max-w-8xl px-6">
           <div className="rounded-2xl bg-white/85 backdrop-blur p-5 flex items-center justify-between shadow-sm">
             <h1 className="text-xl sm:text-2xl font-semibold">O que está rolando perto de você</h1>
             <Button asChild><Link href="/events/new">Criar evento</Link></Button>
@@ -64,7 +64,7 @@ export default function EventsPage() {
         </div>
       </div>
       <div className="px-6 pt-6 flex items-start justify-center">
-        <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="w-full max-w-8xl grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {typeof minsLeft === "number" && minsLeft <= 10 && minsLeft > 0 && (
               <div className="rounded-xl bg-amber-50 text-amber-900 border border-amber-200 px-4 py-3 text-sm">
@@ -73,7 +73,7 @@ export default function EventsPage() {
             )}
             <PopularRow myId={myId} />
             <LiveMapInteractive />
-            <Card className="p-6 space-y-6 border-transparent shadow-none bg-white/70 backdrop-blur">
+            <Card className="p-6 space-y-6 border-transparent ring-1 ring-black/5 shadow-none bg-white/70 backdrop-blur">
             <div className="flex items-center justify-between">
               <PageHeader title="Eventos" />
             </div>
@@ -87,7 +87,7 @@ export default function EventsPage() {
           <div className="text-sm text-muted-foreground">Nenhum evento encontrado.</div>
         ) : (
           <>
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-2">
+            <div className="grid gap-8 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
               {events.map((ev) => (
                 <EventCard
                   key={ev.id}
@@ -110,13 +110,13 @@ export default function EventsPage() {
             </Card>
           </div>
           <div className="space-y-6">
-            <Card className="p-4 border-transparent bg-white/70 backdrop-blur">
+            <Card className="p-4 border-transparent ring-1 ring-black/5 bg-white/70 backdrop-blur">
               <div className="text-sm font-semibold mb-3">Mensagens recentes</div>
               <div className="space-y-2 text-sm">
                 <div className="rounded-lg border px-3 py-2">Sem mensagens por enquanto.</div>
               </div>
             </Card>
-            <Card className="p-4 border-transparent bg-white/70 backdrop-blur">
+            <Card className="p-4 border-transparent ring-1 ring-black/5 bg-white/70 backdrop-blur">
               <div className="text-sm font-semibold mb-3">Destaques</div>
               <div className="text-sm text-muted-foreground">Curadoria semanal de eventos públicos.</div>
             </Card>

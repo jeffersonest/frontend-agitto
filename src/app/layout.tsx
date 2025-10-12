@@ -3,6 +3,7 @@ import { Nunito, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import QueryProvider from "@/lib/react-query";
+import SessionRefresher from "@/components/session-refresher";
 
 const geistSans = Nunito({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
         <QueryProvider>
           {children}
           <Toaster />
+          <SessionRefresher />
         </QueryProvider>
       </body>
     </html>

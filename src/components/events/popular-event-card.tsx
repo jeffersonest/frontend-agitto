@@ -63,7 +63,7 @@ export default function PopularEventCard({
         </div>
       </div>
 
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-2 min-h-36">
         <h3 className="font-semibold text-sm line-clamp-2 leading-tight min-h-[2.5rem]">
           {title}
         </h3>
