@@ -41,6 +41,7 @@ export default function EventCard({ id, title, startDate, locationName, location
             title="Editar"
             className="size-8 rounded-full bg-white/80 text-foreground grid place-items-center hover:bg-white transition-colors"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/events/${id}/edit`); }}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); router.push(`/events/${id}/edit`); } }}
           >
             <Pencil size={16} />
           </button>

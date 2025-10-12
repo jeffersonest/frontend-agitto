@@ -89,6 +89,7 @@ export default function UserMenu() {
           </div>
           <hr className="my-1 border-border" />
           <a href="/events" className="block rounded-md px-3 py-2 text-sm hover:bg-secondary">Eventos</a>
+          <a href="/my-events" className="block rounded-md px-3 py-2 text-sm hover:bg-secondary">Meus eventos</a>
           <button onClick={() => setNotifOpen(true)} className="block w-full text-left rounded-md px-3 py-2 text-sm hover:bg-secondary">
             Notificações
             {active.length > 0 && (

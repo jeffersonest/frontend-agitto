@@ -58,6 +58,9 @@ export interface FilterEventsDto {
   startDate?: string;
   endDate?: string;
   tags?: string[];
+  locationCity?: string;
+  locationState?: string;
+  locationNeighborhood?: string;
   lat?: number;
   lng?: number;
   radius?: number;
