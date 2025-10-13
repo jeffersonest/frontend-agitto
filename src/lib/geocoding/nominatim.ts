@@ -41,7 +41,7 @@ export async function searchAddressNominatim(query: string, countryCodes = "br")
 }
 
 export function toSuggestion(r: NominatimResult): AddressSuggestion {
-  const addr = r.address || {} as any;
+  const addr = (r.address ?? {}) as Record<string, string>;
 
   const street = addr.road;
   const number = addr.house_number;
@@ -113,4 +113,3 @@ export async function searchViaCep(cep: string): Promise<AddressSuggestion | nul
     },
   };
 }
-

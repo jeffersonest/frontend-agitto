@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import FloatingTextField from "@/components/ui/floating-text-field";
 import MarkdownEditor from "@/components/ui/markdown-editor";
 import { MapPin, Building2, Calendar, Clock, Tag, Users, Waypoints } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { GradientHeader } from "@/components/ui/gradient-header";
 import { useCreateEvent } from "@/lib/queries/events";
 import { uploadEventCover } from "@/lib/api/events";
 import { toast } from "sonner";
@@ -44,24 +45,22 @@ export default function NewEventPage() {
   const [file, setFile] = useState<File | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const form = useForm<z.infer<typeof schema>>({
-    resolver: zodResolver(schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema) as any,
     defaultValues: { visibility: "PUBLIC", tags: [] },
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
-      const payload = {
-        ...values,
-        tags,
-      } as any;
+      const payload = { ...values, tags };
       const res = await createMutation.mutateAsync(payload);
       toast.success("Evento criado");
       if (file) {
         try { await uploadEventCover(res.event.id, file); } catch {}
       }
       router.replace(`/events/${res.event.id}`);
-    } catch (e: any) {
-      const msg = e?.message || "Falha ao criar evento";
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Falha ao criar evento";
       if (msg.includes("VERIFICATION_REQUIRED")) {
         toast.error("Verifique seu email ou telefone para continuar");
         router.push("/verify-email");
@@ -73,6 +72,7 @@ export default function NewEventPage() {
 
   return (
     <div className="min-h-screen p-6 flex items-start justify-center">
+      <GradientHeader height="sm" />
       <Card className="w-full max-w-3xl p-6 space-y-6">
         <PageHeader title="Criar evento" />
         <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
@@ -145,7 +145,7 @@ export default function NewEventPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-sm">Hora (início)</label>
-                <FloatingTextField type="time" label="Hora" leftIcon={<Clock size={18} />} {...form.register("_startTime" as any)} />
+                <FloatingTextField type="time" label="Hora" leftIcon={<Clock size={18} />} />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -155,7 +155,7 @@ export default function NewEventPage() {
               </div>
               <div className="space-y-1">
                 <label className="text-sm">Hora (término opcional)</label>
-                <FloatingTextField type="time" label="Hora" leftIcon={<Clock size={18} />} {...form.register("_endTime" as any)} />
+                <FloatingTextField type="time" label="Hora" leftIcon={<Clock size={18} />} />
               </div>
             </div>
             <div className="flex items-center gap-3">

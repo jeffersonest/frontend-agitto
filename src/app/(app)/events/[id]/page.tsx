@@ -1,16 +1,26 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import UsernameChip from "@/components/ui/username-chip";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { useEvent, useUploadEventCover } from "@/lib/queries/events";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MapPin, Calendar, Clock, Users, Share2, Pencil, ArrowLeft } from "lucide-react";
+import { GradientHeader } from "@/components/ui/gradient-header";
+import { MapPin, Calendar, Users, Share2, Pencil, ArrowLeft, Heart, CalendarCheck2, Bookmark, BookmarkCheck, ImageUp } from "lucide-react";
 import { formatEventDate, formatLocationShort } from "@/lib/events/format";
 import { getMe } from "@/lib/api/auth";
 import { toast } from "sonner";
 import { getTokenInfo } from "@/lib/auth/token";
 import MapPoint from "@/components/events/map-point";
+import MarkdownView from "@/components/ui/markdown-view";
+import { shortName } from "@/lib/text";
+import { useAttendees, useLikes } from "@/lib/queries/social";
+import { setRsvp, deleteRsvp, toggleLike } from "@/lib/api/social";
+import AttendeeList from "@/components/users/attendee-list";
+import LikesList from "@/components/users/likes-list";
+import CommentsSection from "@/components/events/comments";
 
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
@@ -20,12 +30,32 @@ export default function EventDetailPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [comments, setComments] = useState<Array<{ id: string; author: string; text: string; ts: number }>>([]);
-  const [text, setText] = useState("");
   const [myId, setMyId] = useState<string | null>(null);
   const [pendingCover, setPendingCover] = useState<string | null>(null);
+  const attendeesGoing = useAttendees(id, "GOING");
+  const likes = useLikes(id);
+  const [viewerLiked, setViewerLiked] = useState<boolean>(false);
+  const [viewerRsvp, setViewerRsvp] = useState<"GOING" | "INTERESTED" | "DECLINED" | null>(null);
+  const [likesCount, setLikesCount] = useState<number>(0);
+  const [attendeeCount, setAttendeeCount] = useState<number>(0);
+  useEffect(() => {
+    if (!data?.event) return;
+    const e = data.event as { 
+      viewer?: { likedByMe?: boolean; rsvpStatus?: string }; 
+      likesCount?: number; 
+      attendeeCount?: number; 
+    };
+    setViewerLiked(Boolean(e.viewer?.likedByMe));
+    setViewerRsvp((e.viewer?.rsvpStatus as "GOING" | "INTERESTED" | "DECLINED") ?? null);
+    setLikesCount(typeof e.likesCount === "number" ? e.likesCount : 0);
+    setAttendeeCount(typeof e.attendeeCount === "number" ? e.attendeeCount : 0);
+  }, [data]);
 
   useEffect(() => {
-    getMe().then((m: any) => setMyId(m?.id ?? null)).catch(() => setMyId(null));
+    getMe().then((m: unknown) => { 
+      const user = m as { id?: string };
+      setMyId(user?.id ?? null); 
+    }).catch(() => { setMyId(null); });
   }, []);
   useEffect(() => {
     const info = getTokenInfo();
@@ -57,8 +87,9 @@ export default function EventDetailPage() {
       await upload.mutateAsync(file);
       toast.success("Imagem enviada");
       setPendingCover(null);
-    } catch (err: any) {
-      const msg = String(err?.message || "Falha ao enviar");
+    } catch (err: unknown) {
+      const error = err as { message?: string };
+      const msg = String(error?.message || "Falha ao enviar");
       toast.error(msg);
       if (/unauthorized|401/i.test(msg)) router.push("/login");
       setPendingCover(null);
@@ -72,12 +103,8 @@ export default function EventDetailPage() {
 
   return (
     <div className="min-h-screen">
+      <GradientHeader />
       <div className="relative h-72 sm:h-96 w-full overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-72 sm:h-96 -z-10 pointer-events-none" style={{
-          background: "linear-gradient(135deg, var(--primary-tint-1), rgba(167,139,250,0.22))",
-          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)",
-          maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)",
-        }} />
         {pendingCover || ev.coverImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={pendingCover || (ev.coverImageUrl as string)} alt="capa" className="absolute inset-0 h-full w-full object-cover" />
@@ -97,42 +124,126 @@ export default function EventDetailPage() {
             <ArrowLeft /> Voltar
           </Button>
         </div>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-8xl px-6">
-          <div className="rounded-2xl bg-white/85 backdrop-blur shadow-sm p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-semibold line-clamp-2">{ev.title}</h1>
-                <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                  {dateText && <span className="inline-flex items-center gap-1"><Calendar size={16} />{dateText}</span>}
-                  {ev.endDate && <span className="inline-flex items-center gap-1"><Clock size={16} />Término flexível</span>}
-                  {localText && <span className="inline-flex items-center gap-1"><MapPin size={16} className="text-[color:var(--primary)]" />{localText}</span>}
-                  {typeof ev.attendeeCount === "number" && <span className="inline-flex items-center gap-1"><Users size={16} />{ev.attendeeCount} participantes</span>}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <span className="rounded-full bg-white/85 backdrop-blur px-2.5 py-1 text-xs ring-1 ring-black/5 inline-flex items-center gap-1">
+            <Users size={14} /> {attendeeCount}
+          </span>
+          <span className="rounded-full bg-white/85 backdrop-blur px-2.5 py-1 text-xs ring-1 ring-black/5 inline-flex items-center gap-1">
+            <Heart size={14} /> {likesCount}
+          </span>
+        </div>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-6xl px-6">
+          <div className="rounded-2xl bg-white/90 backdrop-blur shadow-sm p-4">
+            <div className="flex flex-col gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  {ev.owner?.username && ev.owner.username.toLowerCase() !== "insecure" && (
+                    <UsernameChip username={ev.owner.username} variant="white" size="xs" />
+                  )}
+                </div>
+                <h1 className="text-2xl font-semibold leading-tight line-clamp-2">{ev.title}</h1>
+                <div className="mt-2 text-sm text-muted-foreground flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                  <div className="inline-flex items-center gap-2">
+                    <Calendar size={16} />
+                    <span>{dateText || "Data a definir"}</span>
+                  </div>
+                  <span className="hidden sm:block select-none">•</span>
+                  <div className="inline-flex items-center gap-2">
+                    <MapPin size={16} className="text-[color:var(--primary)]" />
+                    <span>{localText || "Local a definir"}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="secondary" size="sm" onClick={() => navigator.share?.({ title: ev.title, url: location.href }).catch(() => {})}>
-                  <Share2 /> Compartilhar
-                </Button>
-                {isOwner && (
-                  <>
-                    <Button asChild size="sm">
-                      <Link href={`/events/${id}/edit`}><Pencil /> Editar</Link>
-                    </Button>
-                    <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        const info = getTokenInfo();
-                        if (!info.token) { toast.error("Faça login para enviar uma capa"); router.push("/login"); return; }
-                        if (info.expired) { toast.error("Sua sessão expirou. Faça login novamente"); router.push("/login"); return; }
-                        inputRef.current?.click();
-                      }}
-                      disabled={upload.isPending}
-                    >
-                      {upload.isPending ? "Enviando..." : "Enviar capa"}
-                    </Button>
-                  </>
-                )}
+              <div className="flex justify-center">
+                <div className="rounded-xl bg-white/80 p-1 ring-1 ring-black/5 flex flex-wrap md:flex-nowrap gap-1">
+                  <Button className="w-[112px] justify-center" variant="ghost" size="sm" title="Compartilhar" onClick={() => navigator.share?.({ title: ev.title, url: location.href }).catch(() => {})}>
+                    <Share2 />
+                    <span className="sm:hidden">Compart.</span>
+                    <span className="hidden sm:inline">Compartilhar</span>
+                  </Button>
+                  <Button
+                    className="w-[112px] justify-center"
+                    size="sm"
+                    variant={viewerRsvp === "GOING" ? "accent" : "ghost"}
+                    onClick={async () => {
+                      try {
+                        if (viewerRsvp === "GOING") {
+                          await deleteRsvp(id);
+                          setViewerRsvp(null);
+                          setAttendeeCount((c) => Math.max(0, c - 1));
+                        } else {
+                          const res = await setRsvp(id, "GOING") as { attendeeCount?: number };
+                          setViewerRsvp("GOING");
+                          if (typeof res.attendeeCount === "number") setAttendeeCount(res.attendeeCount);
+                        }
+                      } catch {}
+                    }}
+                  >
+                    <CalendarCheck2 />
+                    <span>Vou</span>
+                  </Button>
+                  <Button
+                    className="w-[112px] justify-center"
+                    size="sm"
+                    variant={viewerRsvp === "INTERESTED" ? "accent" : "ghost"}
+                    onClick={async () => {
+                      try {
+                        if (viewerRsvp === "INTERESTED") {
+                          await deleteRsvp(id);
+                          setViewerRsvp(null);
+                        } else {
+                          const res = await setRsvp(id, "INTERESTED") as { attendeeCount?: number };
+                          setViewerRsvp("INTERESTED");
+                          if (typeof res.attendeeCount === "number") setAttendeeCount(res.attendeeCount);
+                        }
+                      } catch {}
+                    }}
+                  >
+                    {viewerRsvp === "INTERESTED" ? <BookmarkCheck /> : <Bookmark />}
+                    <span className="sm:hidden">Int.</span>
+                    <span className="hidden sm:inline">Interesse</span>
+                  </Button>
+                  <Button className="w-[112px] justify-center" size="sm" title="Curtir" variant={viewerLiked ? "accent" : "ghost"} onClick={async () => {
+                    try { const res = await toggleLike(id) as { liked: boolean; likesCount?: number }; setViewerLiked(res.liked); if (typeof res.likesCount === "number") setLikesCount(res.likesCount); } catch {}
+                  }}>
+                    <Heart />
+                    <span>{viewerLiked ? "Curtido" : "Curtir"}</span>
+                  </Button>
+                  {isOwner && (
+                    <>
+                      <Button className="w-[112px] justify-center" asChild size="sm" variant="ghost" title="Editar">
+                        <Link href={`/events/${id}/edit`}>
+                          <Pencil />
+                          <span>Editar</span>
+                        </Link>
+                      </Button>
+                      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+                      <Button
+                        className="w-[112px] justify-center"
+                        size="sm"
+                        variant="ghost"
+                        title="Enviar capa"
+                        onClick={() => {
+                          const info = getTokenInfo();
+                          if (!info.token) { toast.error("Faça login para enviar uma capa"); router.push("/login"); return; }
+                          if (info.expired) { toast.error("Sua sessão expirou. Faça login novamente"); router.push("/login"); return; }
+                          inputRef.current?.click();
+                        }}
+                        disabled={upload.isPending}
+                      >
+                        {upload.isPending ? (
+                          <span>Enviando...</span>
+                        ) : (
+                          <>
+                            <ImageUp />
+                            <span className="sm:hidden">Capa</span>
+                            <span className="hidden sm:inline">Enviar capa</span>
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -142,14 +253,18 @@ export default function EventDetailPage() {
       <div className="px-6 py-6 flex items-start justify-center">
         <div className="grid w-full max-w-8xl grid-cols-1 lg:grid-cols-3 gap-8">
           <Card className="p-6 lg:col-span-2 space-y-6 ring-1 ring-black/5 border-transparent shadow-none bg-white/60 backdrop-blur">
-            <article className="prose prose-sm max-w-none text-foreground/90">
-              <p className="whitespace-pre-wrap">{ev.description || "Sem descrição."}</p>
-            </article>
+            <section className="prose prose-sm max-w-none text-foreground/90">
+              {ev.description ? (
+                <MarkdownView value={ev.description} />
+              ) : (
+                <p className="text-sm text-muted-foreground">Sem descrição.</p>
+              )}
+            </section>
 
             <section className="space-y-3">
               <h3 className="text-lg font-semibold">Localização</h3>
               {ev.locationLat && ev.locationLng ? (
-                <MapPoint lat={ev.locationLat} lng={ev.locationLng} title={ev.title} subtitle={localText || undefined} />
+                <MapPoint lat={ev.locationLat} lng={ev.locationLng} title={ev.title} subtitle={localText || undefined} ownerUsername={ev.owner?.username || undefined} />
               ) : (
                 <div className="text-sm text-muted-foreground">Local não informado.</div>
               )}
@@ -160,41 +275,28 @@ export default function EventDetailPage() {
               <div className="rounded-xl ring-1 ring-black/5 p-6 text-sm text-muted-foreground bg-white/60 backdrop-blur">Em breve: fotos e vídeos do evento.</div>
             </section>
 
-            <section className="space-y-3">
-              <h3 className="text-lg font-semibold">Comentários</h3>
-              <div className="space-y-3">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const t = text.trim();
-                    if (!t) return;
-                    setComments((prev) => [{ id: String(Date.now()), author: "Você", text: t, ts: Date.now() }, ...prev]);
-                    setText("");
-                  }}
-                  className="flex items-start gap-2"
-                >
-                  <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Escreva um comentário..."
-                    className="flex-1 rounded-lg ring-1 ring-black/5 bg-white/70 backdrop-blur px-3 py-2 text-sm min-h-20" />
-                  <Button type="submit">Enviar</Button>
-                </form>
-                {comments.length === 0 ? (
-                  <div className="text-sm text-muted-foreground">Seja o primeiro a comentar.</div>
-                ) : (
-                  <div className="space-y-2">
-                    {comments.map((c) => (
-                      <div key={c.id} className="rounded-lg ring-1 ring-black/5 bg-white/60 backdrop-blur p-3">
-                        <div className="text-sm font-medium">{c.author}</div>
-                        <div className="text-xs text-muted-foreground">{new Date(c.ts).toLocaleString("pt-BR")}</div>
-                        <div className="mt-1 text-sm whitespace-pre-wrap">{c.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
+            <CommentsSection eventId={id} />
           </Card>
 
           <div className="space-y-4">
+            {ev.owner?.username && ev.owner.username.toLowerCase() !== "insecure" && (
+              <Card className="p-4 ring-1 ring-black/5 border-transparent shadow-none bg-white/60 backdrop-blur">
+                <div className="text-sm font-semibold mb-2">Organizador</div>
+                <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-full bg-primary/10 grid place-items-center overflow-hidden flex-shrink-0">
+                    {ev.owner?.avatarUrl ? (
+                      <Image src={ev.owner.avatarUrl as string} alt="avatar" width={40} height={40} className="rounded-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-semibold">{(ev.owner?.name || "").charAt(0).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{shortName(ev.owner?.name || "Organizador")}</div>
+                    <UsernameChip username={ev.owner.username} variant="tint" size="xs" />
+                  </div>
+                </div>
+              </Card>
+            )}
             <Card className="p-4 ring-1 ring-black/5 border-transparent shadow-none bg-white/60 backdrop-blur">
               <div className="text-sm font-semibold mb-2">Quando</div>
               <div className="text-sm text-foreground/80 flex items-center gap-2"><Calendar size={16} /> {dateText || "A definir"}</div>
@@ -212,7 +314,13 @@ export default function EventDetailPage() {
             </Card>
             <Card className="p-4 ring-1 ring-black/5 border-transparent shadow-none bg-white/60 backdrop-blur">
               <div className="text-sm font-semibold mb-2">Participantes</div>
-              <div className="text-sm text-foreground/80">{typeof ev.attendeeCount === "number" ? `${ev.attendeeCount} pessoas vão` : "—"}</div>
+              <div className="text-sm text-foreground/80 mb-2">{attendeeCount} pessoas vão</div>
+              <AttendeeList items={attendeesGoing.data || []} loading={attendeesGoing.isLoading} />
+            </Card>
+            <Card className="p-4 ring-1 ring-black/5 border-transparent shadow-none bg-white/60 backdrop-blur">
+              <div className="text-sm font-semibold mb-2">Curtidas</div>
+              <div className="text-sm text-foreground/80 mb-2">{likesCount} curtidas</div>
+              <LikesList items={(likes.data?.likes || []).map((l) => ({ id: l.id, user: l.user }))} loading={likes.isLoading} />
             </Card>
           </div>
         </div>

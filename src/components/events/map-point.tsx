@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-
-declare global { interface Window { L?: any } }
+import type { Leaflet, LeafletMap } from "@/types/leaflet";
 
 function useLeafletCore() {
   const [ready, setReady] = useState(false);
@@ -25,13 +24,13 @@ function useLeafletCore() {
   return ready;
 }
 
-export default function MapPoint({ lat, lng, title, subtitle }: { lat: number; lng: number; title?: string; subtitle?: string }) {
+export default function MapPoint({ lat, lng, title, subtitle, ownerUsername }: { lat: number; lng: number; title?: string; subtitle?: string; ownerUsername?: string }) {
   const ready = useLeafletCore();
   const ref = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
   useEffect(() => {
     if (!ready || !ref.current || mapRef.current) return;
-    const L = window.L!;
+    const L = window.L as Leaflet;
     const map = L.map(ref.current, { zoomControl: false, attributionControl: false }).setView([lat, lng], 14);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(map);
     L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -39,12 +38,20 @@ export default function MapPoint({ lat, lng, title, subtitle }: { lat: number; l
     const icon = L.divIcon({ className: "", html: `<div style="width:14px;height:14px;border-radius:9999px;border:2px solid ${teal};background:${teal}33"></div>`, iconSize: [14,14], iconAnchor: [7,7] });
     const m = L.marker([lat, lng], { icon }).addTo(map);
     if (title || subtitle) {
-      const html = `<div style="min-width:180px; font-size:12px; line-height:1.2"><div style="font-weight:600; margin-bottom:2px">${title || "Local do evento"}</div><div style="color:#6B7280">${subtitle || ""}</div></div>`;
+      const uname = (ownerUsername || "").toString();
+      const showU = uname && uname.toLowerCase() !== "insecure";
+      const html = `
+        <div style="min-width:200px; font-size:12px; line-height:1.2">
+          <div style="display:flex;align-items:center;gap:6px;font-weight:600;margin-bottom:2px">
+            ${showU ? `<a href="/profile/${uname}" class="agitto-username-chip">@${uname}</a>` : ""}
+            <span>${title || "Local do evento"}</span>
+          </div>
+          <div style="color:#6B7280">${subtitle || ""}</div>
+        </div>`;
       m.bindTooltip(html, { direction: 'top', opacity: 1, sticky: true, className: 'agitto-map-tip', offset: [0, -8] });
     }
     mapRef.current = map;
-  }, [ready, lat, lng, title, subtitle]);
+  }, [ready, lat, lng, title, subtitle, ownerUsername]);
 
   return <div ref={ref} className="w-full h-72 rounded-xl overflow-hidden ring-1 ring-black/5 bg-white/60 backdrop-blur" />;
 }
-

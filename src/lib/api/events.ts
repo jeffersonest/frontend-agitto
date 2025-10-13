@@ -20,10 +20,24 @@ export interface EventEntity {
   locationLng: number | null;
   capacity: number | null;
   attendeeCount: number;
+  likesCount?: number;
+  interestedCount?: number;
   tags: string[];
   createdAt: string;
   updatedAt: string;
   distance?: number;
+  owner?: {
+    id: string;
+    name?: string | null;
+    avatarUrl?: string | null;
+    profileImageUrl?: string | null;
+    username?: string | null;
+  };
+  viewer?: {
+    likedByMe: boolean;
+    rsvpStatus: "GOING" | "INTERESTED" | "DECLINED" | null;
+    canEdit: boolean;
+  };
 }
 
 export interface CreateEventDto {
@@ -120,13 +134,24 @@ export async function uploadEventCover(id: string, file: File) {
   return data as { message: string; imageUrl: string };
 }
 
+export interface LiveMapMarker {
+  id: string;
+  lat: number;
+  lng: number;
+  title: string;
+  locationName?: string | null;
+  owner?: { username?: string | null } | null;
+  ownerUsername?: string | null;
+  username?: string | null;
+}
+
 export async function listLiveMap(params: Record<string, string | number | undefined> = {}) {
   const q = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
     if (v !== undefined && v !== null) q.append(k, String(v));
   });
   const qs = q.toString();
-  return http<{ markers: any[]; total: number }>(`/events/live-map${qs ? `?${qs}` : ""}`, { method: "GET" });
+  return http<{ markers: LiveMapMarker[]; total: number }>(`/events/live-map${qs ? `?${qs}` : ""}`, { method: "GET" });
 }
 
 export interface DiscoverListResponse {
@@ -148,4 +173,55 @@ export async function listTrending(params: { skip?: number; take?: number } = {}
   if (typeof params.take === "number") q.append("take", String(params.take));
   const qs = q.toString();
   return http<DiscoverListResponse>(`/events/trending${qs ? `?${qs}` : ""}`, { method: "GET" });
+}
+
+export async function listDiscovery(params: { skip?: number; take?: number } = {}) {
+  const q = new URLSearchParams();
+  if (typeof params.skip === "number") q.append("skip", String(params.skip));
+  if (typeof params.take === "number") q.append("take", String(params.take));
+  const qs = q.toString();
+  return http<{ total: number; events: EventEntity[] }>(`/events/discovery${qs ? `?${qs}` : ""}`, { method: "GET", auth: true });
+}
+
+export async function listFollowingFeed(params: { skip?: number; take?: number } = {}) {
+  const q = new URLSearchParams();
+  if (typeof params.skip === "number") q.append("skip", String(params.skip));
+  if (typeof params.take === "number") q.append("take", String(params.take));
+  const qs = q.toString();
+  return http<{ total: number; events: EventEntity[] }>(`/feed/following${qs ? `?${qs}` : ""}`, { method: "GET", auth: true });
+}
+
+// Calendar API
+export type MyCalendarEvent = {
+  id: string;
+  title: string;
+  start: string;
+  end?: string | null;
+  allDay?: boolean;
+  rsvpStatus: "GOING" | "INTERESTED";
+  status: "upcoming" | "ongoing" | "past";
+  tags?: string[];
+  color?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+  locationCity?: string | null;
+  locationName?: string | null;
+  locationAddress?: string | null;
+  coverImageUrl?: string | null;
+  owner?: { id: string; name?: string | null; username?: string | null; profileImageUrl?: string | null } | null;
+};
+
+export type MyCalendarResponse = {
+  events: MyCalendarEvent[];
+  eventsByDate: Record<string, { count: number; statuses: Array<"GOING" | "INTERESTED">; hasGoing: boolean; hasInterested: boolean; hasPast: boolean; hasOngoing: boolean }>;
+  summary: { totalEvents: number; totalGoing: number; totalInterested: number; upcomingCount: number; ongoingCount: number; pastCount: number };
+};
+
+export async function getMyCalendar(params: { month?: string; rsvpStatus?: string } = {}) {
+  const q = new URLSearchParams();
+  if (params.month) q.append("month", params.month);
+  if (params.rsvpStatus) q.append("rsvpStatus", params.rsvpStatus);
+  const qs = q.toString();
+  return http<MyCalendarResponse>(`/events/my-calendar${qs ? `?${qs}` : ""}`, { method: "GET", auth: true });
 }

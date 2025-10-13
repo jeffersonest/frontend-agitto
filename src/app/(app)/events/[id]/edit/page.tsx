@@ -1,11 +1,13 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useEvent } from "@/lib/queries/events";
 import { updateEvent, uploadEventCover } from "@/lib/api/events";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { GradientHeader } from "@/components/ui/gradient-header";
 import FloatingTextField from "@/components/ui/floating-text-field";
+import MarkdownEditor from "@/components/ui/markdown-editor";
 import AddressSearch from "@/components/events/address-search";
 import { MapPin, Building2, Calendar, Clock, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -50,7 +52,18 @@ export default function EditEventPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const payload: any = {
+      type UpdatePayload = {
+        title: string;
+        description: string;
+        startDate?: string;
+        endDate?: string;
+        locationName: string;
+        locationAddress: string;
+        locationLat?: number;
+        locationLng?: number;
+        capacity?: number;
+      };
+      const payload: UpdatePayload = {
         title,
         description,
         startDate: composeISO(startDate, startTime),
@@ -65,8 +78,9 @@ export default function EditEventPage() {
       if (file) await uploadEventCover(id, file);
       toast.success("Evento atualizado");
       router.replace(`/events/${id}`);
-    } catch (err: any) {
-      toast.error(err?.message || "Falha ao atualizar evento");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Falha ao atualizar evento";
+      toast.error(msg);
     }
   }
 
@@ -74,6 +88,7 @@ export default function EditEventPage() {
 
   return (
     <div className="min-h-screen p-6 flex items-start justify-center">
+      <GradientHeader height="sm" />
       <Card className="w-full max-w-3xl p-6 space-y-6">
         <CardHeader>
           <CardTitle className="text-2xl font-semibold">Editar evento</CardTitle>
@@ -105,7 +120,14 @@ export default function EditEventPage() {
             <section className="space-y-3">
               <h3 className="text-lg font-semibold">Informações do evento</h3>
               <FloatingTextField label="Nome do evento" value={title} onChange={(e) => setTitle(e.target.value)} />
-              <FloatingTextField label="Descrição" value={description} onChange={(e) => setDescription(e.target.value)} />
+              <div className="space-y-1">
+                <label className="text-sm">Descrição</label>
+                <MarkdownEditor
+                  value={description || ""}
+                  onChange={(v) => setDescription(v)}
+                  placeholder="Descreva seu evento em Markdown..."
+                />
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-sm">Data (início)</label>
@@ -148,4 +170,3 @@ export default function EditEventPage() {
     </div>
   );
 }
-

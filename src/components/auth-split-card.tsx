@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/ui/logo";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -32,7 +33,10 @@ export default function AuthSplitCard({ leftTitle, leftSubtitle, leftCta, childr
             )}
           </div>
         </div>
-        <div className="p-6 sm:p-8">
+        <div className="p-6 sm:p-8 space-y-6">
+          <div className="flex justify-center">
+            <Logo width={120} height={40} className="h-10" />
+          </div>
           {children}
         </div>
       </div>

@@ -46,11 +46,11 @@
 :root {
   --radius: 0.75rem;
   --background: #ffffff;
-  --foreground: #303030;
+  --foreground: #141414;
   --card: #ffffff;
-  --card-foreground: #303030;
+  --card-foreground: #141414;
   --popover: #ffffff;
-  --popover-foreground: #303030;
+  --popover-foreground: #141414;
   --primary: #24bfbf;
   --primary-foreground: #ffffff;
   --primary-600: #20A7A7;
@@ -58,7 +58,7 @@
   --primary-tint-1: #F0FBFB;
   --primary-tint-2: #E6F8F8;
   --secondary: #f5f5f5;
-  --secondary-foreground: #303030;
+  --secondary-foreground: #141414;
   --muted: #818497;
   --muted-foreground: #6b7280;
   --neutral-900: #111827;
@@ -68,45 +68,47 @@
   --neutral-500: #6B7280;
   --neutral-300: #D1D5DB;
   --neutral-100: #F3F4F6;
+  --dark: #141414;
   --lavender: #A78BFA;
   --lavender-600: #8B5CF6;
   --lavender-700: #6D28D9;
   --lavender-50: #F3F2FF;
   --lavender-100: #EDEBFE;
   --accent: #f5f5f5;
-  --accent-foreground: #303030;
+  --accent-foreground: #141414;
   --destructive: #ef4444;
   --border: #e5e7eb;
   --input: #e5e7eb;
   --ring: #24bfbf;
+  --ring-soft: #14141414;
   --chart-1: #7c3aed;
   --chart-2: #0ea5e9;
   --chart-3: #2563eb;
   --chart-4: #22c55e;
   --chart-5: #eab308;
   --sidebar: #fafafa;
-  --sidebar-foreground: #303030;
+  --sidebar-foreground: #141414;
   --sidebar-primary: #24bfbf;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f5f5f5;
-  --sidebar-accent-foreground: #303030;
+  --sidebar-accent-foreground: #141414;
   --sidebar-border: #e5e7eb;
   --sidebar-ring: #24bfbf;
 }
 
 .dark {
-  --background: #303030;
+  --background: #141414;
   --foreground: #ffffff;
-  --card: #303030;
+  --card: #141414;
   --card-foreground: #ffffff;
-  --popover: #303030;
+  --popover: #141414;
   --popover-foreground: #ffffff;
   --primary: #24bfbf;
-  --primary-foreground: #303030;
+  --primary-foreground: #141414;
   --primary-600: #20A7A7;
   --primary-700: #1B9090;
-  --primary-tint-1: color-mix(in oklab, #24bfbf 20%, #303030);
-  --primary-tint-2: color-mix(in oklab, #24bfbf 12%, #303030);
+  --primary-tint-1: color-mix(in oklab, #24bfbf 20%, #141414);
+  --primary-tint-2: color-mix(in oklab, #24bfbf 12%, #141414);
   --secondary: #1f2937;
   --secondary-foreground: #ffffff;
   --muted: #374151;
@@ -121,14 +123,15 @@
   --lavender: #A78BFA;
   --lavender-600: #8B5CF6;
   --lavender-700: #7C3AED;
-  --lavender-50: color-mix(in oklab, #A78BFA 16%, #303030);
-  --lavender-100: color-mix(in oklab, #A78BFA 24%, #303030);
+  --lavender-50: color-mix(in oklab, #A78BFA 16%, #141414);
+  --lavender-100: color-mix(in oklab, #A78BFA 24%, #141414);
   --accent: #374151;
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --border: #ffffff1a;
   --input: #ffffff26;
   --ring: #24bfbf;
+  --ring-soft: #ffffff1a;
   --chart-1: #6366f1;
   --chart-2: #22d3ee;
   --chart-3: #f59e0b;
@@ -137,7 +140,7 @@
   --sidebar: #1f2937;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #24bfbf;
-  --sidebar-primary-foreground: #303030;
+  --sidebar-primary-foreground: #141414;
   --sidebar-accent: #111827;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #ffffff1a;
@@ -173,6 +176,23 @@
   backdrop-filter: blur(6px);
 }
 .leaflet-tooltip.agitto-map-tip:before { display: none; }
+.leaflet-tooltip.agitto-map-tip .agitto-username-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  color: #111;
+  border-radius: 9999px;
+  padding: 2px 6px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid rgb(0 0 0 / 0.05);
+}
+.leaflet-tooltip.agitto-map-tip .agitto-username-chip:hover {
+  color: var(--primary);
+  text-decoration: underline;
+  border-color: color-mix(in oklab, var(--primary) 30%, transparent);
+}
 
 .theme-primary-lavender {
   --primary: var(--lavender);

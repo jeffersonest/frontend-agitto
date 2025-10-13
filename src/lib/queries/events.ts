@@ -1,6 +1,6 @@
 "use client";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createEvent, deleteEvent, getEvent, listEvents, listLiveMap, listPopularWeek, listTrending, type CreateEventDto, type EventListResponse, type UpdateEventDto, updateEvent, uploadEventCover } from "@/lib/api/events";
+import { createEvent, deleteEvent, getEvent, listEvents, listLiveMap, listPopularWeek, listTrending, listFollowingFeed, listDiscovery, type CreateEventDto, type UpdateEventDto, updateEvent, uploadEventCover, getMyCalendar, type MyCalendarResponse } from "@/lib/api/events";
 
 export const eventKeys = {
   all: ["events"] as const,
@@ -16,7 +16,7 @@ export function useEvent(id?: string) {
   return useQuery({ queryKey: id ? eventKeys.detail(id) : eventKeys.list(), queryFn: () => getEvent(id as string), enabled: Boolean(id) });
 }
 
-export function useInfiniteEvents(params?: Parameters<typeof listEvents>[0]) {
+export function useInfiniteEvents(params?: Parameters<typeof listEvents>[0], options?: { enabled?: boolean }) {
   return useInfiniteQuery({
     queryKey: eventKeys.list(params),
     queryFn: ({ pageParam }) => listEvents({ ...(params || {}), skip: pageParam?.skip ?? 0, take: pageParam?.take ?? (params?.take ?? 20) }),
@@ -27,6 +27,7 @@ export function useInfiniteEvents(params?: Parameters<typeof listEvents>[0]) {
       if (nextSkip >= total) return undefined;
       return { skip: nextSkip, take };
     },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -94,5 +95,37 @@ export function useTrendingInfinite(params?: { take?: number }) {
       return { skip: (last.pagination.skip ?? 0) + (last.pagination.take ?? take), take };
     },
     staleTime: 60_000 * 3,
+  });
+}
+
+export function useFollowingFeedInfinite(params?: { take?: number; enabled?: boolean }) {
+  const take = params?.take ?? 20;
+  return useInfiniteQuery({
+    queryKey: ["events", "feed", "following", { take }],
+    queryFn: ({ pageParam }) => listFollowingFeed({ skip: pageParam?.skip ?? 0, take }),
+    initialPageParam: { skip: 0, take },
+    getNextPageParam: (last, pages) => (last.events.length < take ? undefined : { skip: pages.length * take, take }),
+    enabled: params?.enabled ?? false,
+    staleTime: 60_000 * 3,
+  });
+}
+
+export function useDiscoveryInfinite(params?: { take?: number; enabled?: boolean }) {
+  const take = params?.take ?? 20;
+  return useInfiniteQuery({
+    queryKey: ["events", "discovery", { take }],
+    queryFn: ({ pageParam }) => listDiscovery({ skip: pageParam?.skip ?? 0, take }),
+    initialPageParam: { skip: 0, take },
+    getNextPageParam: (last, pages) => (last.events.length < take ? undefined : { skip: pages.length * take, take }),
+    enabled: params?.enabled ?? false,
+    staleTime: 60_000 * 5,
+  });
+}
+
+export function useMyCalendar(month: string, rsvpStatus?: string) {
+  return useQuery<MyCalendarResponse>({
+    queryKey: ["calendar", month, rsvpStatus || "both"],
+    queryFn: () => getMyCalendar({ month, rsvpStatus }),
+    staleTime: 5 * 60_000,
   });
 }

@@ -5,16 +5,21 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import type { LiveMapMarker } from "@/lib/api/events";
 
 export default function LiveMapWidget() {
   const [city, setCity] = useState("");
   const { data, isLoading, refetch } = useLiveMap({ locationCity: city || undefined });
-  const markers = data?.markers || [];
+  const markers = useMemo(() => data?.markers ?? [], [data?.markers]);
+  const validMarkers = useMemo(
+    () => markers.filter((m): m is LiveMapMarker => typeof (m as LiveMapMarker | undefined)?.lat === "number" && typeof (m as LiveMapMarker | undefined)?.lng === "number"),
+    [markers]
+  );
   const center = useMemo(() => {
-    if (markers.length === 0) return { lat: -8.0476, lng: -34.8770 };
-    const mid = Math.floor(markers.length / 2);
-    return { lat: markers[mid].lat, lng: markers[mid].lng };
-  }, [markers]);
+    if (validMarkers.length === 0) return { lat: -8.0476, lng: -34.8770 };
+    const mid = Math.floor(validMarkers.length / 2);
+    return { lat: validMarkers[mid].lat, lng: validMarkers[mid].lng };
+  }, [validMarkers]);
   const mapUrl = `https://www.openstreetmap.org/export/embed.html?layer=mapnik&marker=${center.lat},${center.lng}`;
 
   return (
@@ -35,7 +40,7 @@ export default function LiveMapWidget() {
         ) : markers.length === 0 ? (
           <div className="text-xs text-muted-foreground">Sem eventos públicos por aqui.</div>
         ) : (
-          markers.slice(0, 5).map((m: any) => (
+          validMarkers.slice(0, 5).map((m: LiveMapMarker) => (
             <Link key={m.id} href={`/events/${m.id}`} className="block rounded-md border px-2 py-2 text-xs hover:bg-secondary/70">
               <div className="font-medium truncate">{m.title}</div>
               <div className="text-muted-foreground truncate">{m.locationName || "Local a definir"}</div>
@@ -46,4 +51,3 @@ export default function LiveMapWidget() {
     </Card>
   );
 }
-

@@ -5,8 +5,10 @@ import PopularEventCard from "@/components/events/popular-event-card";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
+import type { EventEntity } from "@/lib/api/events";
 
 export default function PopularRow({ myId }: { myId: string | null }) {
+  void myId;
   const { data: week, isLoading } = usePopularWeek({ take: 20 });
   const weekEvents = useMemo(() => week?.events ?? [], [week]);
   const useTrending = weekEvents.length === 0;
@@ -62,7 +64,7 @@ export default function PopularRow({ myId }: { myId: string | null }) {
       ) : (
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex gap-4 pb-3">
-            {events.map((ev) => (
+            {events.map((ev: EventEntity) => (
               <div key={ev.id} className="flex-none w-[280px] min-w-0">
                 <PopularEventCard
                   id={ev.id}
@@ -73,6 +75,7 @@ export default function PopularRow({ myId }: { myId: string | null }) {
                   coverImageUrl={ev.coverImageUrl}
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
+                  ownerUsername={ev.owner?.username ?? null}
                 />
               </div>
             ))}

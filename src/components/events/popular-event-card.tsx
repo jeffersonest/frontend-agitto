@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
+import UsernameChip from "@/components/ui/username-chip";
 import { MapPin, Users } from "lucide-react";
-import { getSportColor } from "@/lib/events/sports-colors";
+import { categoryFromTags, categoryColorHex, categoryEmoji } from "@/lib/events/category";
 import { formatEventDate, formatLocationShort } from "@/lib/events/format";
 
 type Props = {
@@ -13,6 +14,7 @@ type Props = {
   coverImageUrl?: string | null;
   tags?: string[];
   attendeeCount?: number;
+  ownerUsername?: string | null;
 };
 
 export default function PopularEventCard({
@@ -23,12 +25,15 @@ export default function PopularEventCard({
   locationAddress,
   coverImageUrl,
   tags,
-  attendeeCount
+  attendeeCount,
+  ownerUsername
 }: Props) {
-  const sportColor = getSportColor(tags?.[0] || '');
+  const category = categoryFromTags(tags);
+  const sportColor = categoryColorHex(category);
+  const emoji = categoryEmoji(category);
   const dateText = formatEventDate(startDate);
   const localText = formatLocationShort(locationName || undefined, locationAddress || undefined);
-  const sportTag = tags?.[0] || 'esporte';
+  const showUsername = ownerUsername && ownerUsername.toLowerCase() !== "insecure" ? ownerUsername : null;
 
   return (
     <Link
@@ -49,16 +54,20 @@ export default function PopularEventCard({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-white/30">
-            <div className="text-6xl">🏃</div>
+            <div className="text-6xl">{emoji}</div>
           </div>
         )}
 
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 flex items-center gap-2">
+          {showUsername && (
+            <UsernameChip username={showUsername} mode="button" variant="white" size="xs" />
+          )}
           <span
-            className="inline-block px-3 py-1 rounded-full text-white text-xs font-medium capitalize"
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-xs font-medium capitalize"
             style={{ backgroundColor: sportColor }}
           >
-            {sportTag}
+            <span>{emoji}</span>
+            <span>{category}</span>
           </span>
         </div>
       </div>
@@ -76,7 +85,7 @@ export default function PopularEventCard({
 
         {localText && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <MapPin size={12} className="text-purple-600 shrink-0" />
+            <MapPin size={12} className="text-[color:var(--primary)] shrink-0" />
             <span className="line-clamp-1">{localText}</span>
           </div>
         )}

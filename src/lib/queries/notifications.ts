@@ -12,7 +12,7 @@ export function useActiveNotifications() {
   return useQuery({
     queryKey: notificationKeys.active(),
     queryFn: listActiveNotifications,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   });
 }
 

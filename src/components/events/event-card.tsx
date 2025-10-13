@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import UsernameChip from "@/components/ui/username-chip";
 import { MapPin, Star, Pencil } from "lucide-react";
 import { categoryColor, categoryEmoji, categoryFromTags, categoryTint } from "@/lib/events/category";
 import { formatEventDate, formatLocationShort } from "@/lib/events/format";
@@ -15,20 +16,25 @@ type Props = {
   tags?: string[];
   attendeeCount?: number;
   isOwner?: boolean;
+  ownerUsername?: string | null;
 };
 
-export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, isOwner }: Props) {
+export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, isOwner, ownerUsername }: Props) {
   const router = useRouter();
   const cat = categoryFromTags(tags);
   const color = categoryColor(cat);
   const tint = categoryTint(cat, 0.25);
   const dateText = formatEventDate(startDate);
   const localText = formatLocationShort(locationName || undefined, locationAddress || undefined);
+  const showUsername = ownerUsername && ownerUsername.toLowerCase() !== "insecure" ? ownerUsername : null;
   return (
     <Link href={`/events/${id}`} className="group relative rounded-2xl overflow-hidden border-transparent ring-1 ring-black/5 bg-secondary/20 backdrop-blur hover:shadow-md transition-shadow">
       <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: coverImageUrl ? `url(${coverImageUrl})` : "none" }} />
       <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5)), ${tint}` }} />
-      <div className="absolute top-3 left-3">
+      <div className="absolute top-3 left-3 flex items-center gap-2">
+        {showUsername && (
+          <UsernameChip username={showUsername} mode="button" variant="white" size="xs" />
+        )}
         <span className="rounded-full text-white text-xs px-2 py-0.5 flex items-center gap-1" style={{ backgroundColor: color }}>
           <span>{categoryEmoji(cat)}</span>
           <span>{cat}</span>

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import FloatingTextField from "@/components/ui/floating-text-field";
-import { Mail, LockKeyhole, UserPlus, ArrowLeft } from "lucide-react";
+import { Mail, LockKeyhole, UserPlus, ArrowLeft, AtSign } from "lucide-react";
 import { Controller } from "react-hook-form";
 import FloatingPhoneInputBR from "@/components/phone-input-br-floating";
 import AuthSplitScreen from "@/components/auth-split-screen";
@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const schema = z
   .object({
     name: z.string().min(2),
+    username: z.string().min(8).max(20).regex(/^[a-z][a-z0-9_]*$/),
     email: z.string().email(),
     phone: z.string().optional(),
     password: z.string().min(8),
@@ -33,14 +34,14 @@ export default function RegisterPage() {
   const qc = useQueryClient();
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", phone: "", password: "", confirm: "" },
+    defaultValues: { name: "", username: "", email: "", phone: "", password: "", confirm: "" },
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
     try {
       setLoading(true);
-      const { name, email, phone, password } = values;
-      const res = await apiRegister({ name, email, password });
+      const { name, username, email, phone, password } = values;
+      const res = await apiRegister({ name, username: username.toLowerCase(), email, password });
       if (res.ok) {
         qc.invalidateQueries({ queryKey: ["notifications", "active"] });
         toast.success("Cadastro realizado. Vamos verificar seu celular.");
@@ -76,6 +77,19 @@ export default function RegisterPage() {
           />
           {form.formState.errors.name && (
             <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
+          )}
+          <FloatingTextField
+            label="Username"
+            leftIcon={<AtSign size={18} />}
+            placeholder="ex: jeffersonsilva"
+            {...form.register("username", {
+              onChange: (e) => {
+                e.target.value = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+              },
+            })}
+          />
+          {form.formState.errors.username && (
+            <p className="text-sm text-red-500">Username deve ter 8-20 caracteres, começar com letra e conter apenas letras minúsculas, números e underscore</p>
           )}
           <FloatingTextField type="email" label="E-mail" leftIcon={<Mail size={18} />} {...form.register("email")} />
           {form.formState.errors.email && (

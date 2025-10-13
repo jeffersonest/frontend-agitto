@@ -13,13 +13,11 @@ export default function AddressSearch({ onSelect, placeholder }: Props) {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<AddressSuggestion[]>([]);
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const debounced = useDebounce(q, 400);
 
   async function doSearch(value: string) {
     if (!value || value.length < 3) { setResults([]); return; }
     try {
-      setLoading(true);
       let r: AddressSuggestion[] = [];
       const cepMatch = value.replace(/\s/g, "").match(/^\d{5}-?\d{3}$/);
       if (cepMatch) {
@@ -30,15 +28,15 @@ export default function AddressSearch({ onSelect, placeholder }: Props) {
       }
       setResults(r);
       setOpen(true);
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.warn("Search error:", error);
+      setResults([]);
     }
   }
 
   useEffect(() => {
     if (debounced && debounced.length >= 3) doSearch(debounced);
     else setResults([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debounced]);
 
   return (

@@ -1,7 +1,8 @@
 "use client";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
-import { useInfiniteEvents } from "@/lib/queries/events";
+import { useInfiniteEvents, useFollowingFeedInfinite, useDiscoveryInfinite } from "@/lib/queries/events";
+import type { EventEntity } from "@/lib/api/events";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -10,9 +11,19 @@ import EventCard from "@/components/events/event-card";
 import LiveMapInteractive from "@/components/events/live-map-interactive";
 import PopularRow from "@/components/events/popular-row";
 
+import { GradientHeader } from "@/components/ui/gradient-header";
+
 export default function EventsPage() {
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteEvents({ status: "PUBLISHED", take: 12 });
-  const events = useMemo(() => (data?.pages || []).flatMap((p) => p.events), [data]);
+  const [tab, setTab] = useState<"nearby" | "following" | "discovery">(() => (typeof window !== "undefined" ? ((localStorage.getItem("agitto:feedTab") as "nearby" | "following" | "discovery") || "nearby") : "nearby"));
+  const nearby = useInfiniteEvents({ status: "PUBLISHED", take: 12 }, { enabled: tab === "nearby" });
+  const following = useFollowingFeedInfinite({ take: 12, enabled: tab === "following" });
+  const discovery = useDiscoveryInfinite({ take: 12, enabled: tab === "discovery" });
+  const data = tab === "nearby" ? nearby.data : (tab === "following" ? following.data : discovery.data);
+  const isLoading = tab === "nearby" ? nearby.isLoading : (tab === "following" ? following.isLoading : discovery.isLoading);
+  const fetchNextPage = tab === "nearby" ? nearby.fetchNextPage : (tab === "following" ? following.fetchNextPage : discovery.fetchNextPage);
+  const hasNextPage = tab === "nearby" ? nearby.hasNextPage : (tab === "following" ? following.hasNextPage : discovery.hasNextPage);
+  const isFetchingNextPage = tab === "nearby" ? nearby.isFetchingNextPage : (tab === "following" ? following.isFetchingNextPage : discovery.isFetchingNextPage);
+  const events: EventEntity[] = useMemo(() => (data?.pages || []).flatMap((p: { events: EventEntity[] }) => p.events), [data]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
 
@@ -28,8 +39,14 @@ export default function EventsPage() {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   useEffect(() => {
-    getMe().then((m: any) => setMyId(m?.id ?? null)).catch(() => setMyId(null));
+    getMe().then((m: unknown) => {
+      const user = m as { id?: string };
+      setMyId(user?.id ?? null);
+    }).catch(() => setMyId(null));
   }, []);
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem("agitto:feedTab", tab);
+  }, [tab]);
   const [minsLeft, setMinsLeft] = useState<number | null>(null);
   useEffect(() => {
     import("@/lib/auth/token").then(({ getTokenInfo }) => {
@@ -47,14 +64,7 @@ export default function EventsPage() {
   }, []);
   return (
     <div className="min-h-screen">
-      <div
-        className="absolute inset-x-0 top-0 h-72 sm:h-96 -z-10 pointer-events-none"
-        style={{
-          background: "linear-gradient(135deg, var(--primary-tint-1), rgba(167,139,250,0.22))",
-          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)",
-          maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 58%, rgba(0,0,0,0) 100%)",
-        }}
-      />
+      <GradientHeader />
       <div className="relative w-full pt-16">
         <div className="mx-auto max-w-8xl px-6">
           <div className="rounded-2xl bg-white/85 backdrop-blur p-5 flex items-center justify-between shadow-sm">
@@ -77,6 +87,11 @@ export default function EventsPage() {
             <div className="flex items-center justify-between">
               <PageHeader title="Eventos" />
             </div>
+            <div className="inline-flex items-center gap-1 rounded-xl bg-white/80 p-1 ring-1 ring-black/5">
+              <button className={`px-3 py-1.5 rounded-lg text-sm ${tab === "nearby" ? "bg-primary text-white" : "text-foreground"}`} onClick={() => setTab("nearby")}>Perto de mim</button>
+              <button className={`px-3 py-1.5 rounded-lg text-sm ${tab === "discovery" ? "bg-primary text-white" : "text-foreground"}`} onClick={() => setTab("discovery")}>Para você</button>
+              <button className={`px-3 py-1.5 rounded-lg text-sm ${tab === "following" ? "bg-primary text-white" : "text-foreground"}`} onClick={() => setTab("following")}>Seguindo</button>
+            </div>
         {isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -84,7 +99,35 @@ export default function EventsPage() {
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="text-sm text-muted-foreground">Nenhum evento encontrado.</div>
+          tab === "following" ? (
+            <div className="rounded-2xl ring-1 ring-black/5 bg-white/70 backdrop-blur p-6 text-center space-y-3">
+              <div className="text-sm text-muted-foreground">
+                {myId ? "Siga pessoas para ver eventos nesta aba." : "Faça login para ver eventos de quem você segue."}
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                {!myId ? (
+                  <Button asChild>
+                    <Link href="/login">Entrar</Link>
+                  </Button>
+                ) : (
+                  <Button asChild variant="secondary">
+                    <Link href="/settings">Descobrir/seguir pessoas</Link>
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : tab === "discovery" ? (
+            <div className="rounded-2xl ring-1 ring-black/5 bg-white/70 backdrop-blur p-6 text-center space-y-3">
+              <div className="text-sm text-muted-foreground">Sem recomendações ainda. Participe de eventos e marque interesse para melhorar suas sugestões.</div>
+              <div className="flex items-center justify-center gap-2">
+                <Button asChild>
+                  <Link href="/events">Explorar eventos</Link>
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">Nenhum evento encontrado.</div>
+          )
         ) : (
           <>
             <div className="grid gap-8 [grid-template-columns:repeat(auto-fill,minmax(300px,1fr))]">
@@ -100,6 +143,7 @@ export default function EventsPage() {
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
                   isOwner={myId ? ev.ownerId === myId : false}
+                  ownerUsername={(ev as { owner?: { username?: string } })?.owner?.username || null}
                 />
               ))}
             </div>
@@ -125,42 +169,4 @@ export default function EventsPage() {
       </div>
     </div>
   );
-}
-
-function categoryFromTags(tags: string[] | undefined): string {
-  if (!tags || tags.length === 0) return "Esporte";
-  const t = tags[0]?.toLowerCase();
-  if (/(fut|soccer|football)/.test(t)) return "Futebol";
-  if (/(basquete|basket)/.test(t)) return "Basquete";
-  if (/(natação|swim)/.test(t)) return "Natação";
-  if (/(bal(e|é)t|ballet)/.test(t)) return "Balé";
-  if (/(corrida|run)/.test(t)) return "Corrida";
-  if (/(luta|mma|jiu|karat|muay|boxe|boxing)/.test(t)) return "Luta";
-  return capitalize(tags[0]);
-}
-
-function categoryColor(cat: string): string {
-  switch (cat) {
-    case "Futebol": return "#16a34a"; // green
-    case "Basquete": return "#f97316"; // orange
-    case "Natação": return "#0ea5e9"; // sky
-    case "Balé": return "#ec4899"; // pink
-    case "Corrida": return "#22c55e"; // green light
-    case "Luta": return "#ef4444"; // red
-    default: return "#8B5CF6"; // lavender-600
-  }
-}
-
-function capitalize(s: string) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
-
-function categoryEmoji(cat: string): string {
-  switch (cat) {
-    case "Futebol": return "⚽";
-    case "Basquete": return "🏀";
-    case "Natação": return "🏊";
-    case "Balé": return "🩰";
-    case "Corrida": return "🏃";
-    case "Luta": return "🥊";
-    default: return "🏅";
-  }
 }

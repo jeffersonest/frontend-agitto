@@ -64,7 +64,7 @@ export default function RichTextarea({ value = "", onChange, placeholder }: Prop
         rows={10}
       />
       <div className="text-xs text-muted-foreground pt-2 border-t">
-        Suporta Markdown: negrito (**texto**), itálico (*texto*), títulos (#), listas (- ou 1.), links, citações (>), código (`)
+        Suporta Markdown: negrito (**texto**), itálico (*texto*), títulos (#), listas (- ou 1.), links, citações (&gt;), código (`)
       </div>
     </div>
   );
