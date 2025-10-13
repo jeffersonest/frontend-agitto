@@ -35,7 +35,7 @@ export default function AuthSplitCard({ leftTitle, leftSubtitle, leftCta, childr
         </div>
         <div className="p-6 sm:p-8 space-y-6">
           <div className="flex justify-center">
-            <Logo width={120} height={40} className="h-10" />
+            <Logo size="xl" animated />
           </div>
           {children}
         </div>
@@ -43,4 +43,3 @@ export default function AuthSplitCard({ leftTitle, leftSubtitle, leftCta, childr
     </Card>
   );
 }
-

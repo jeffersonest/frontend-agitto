@@ -34,9 +34,9 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
     "Content-Type": "application/json",
     ...(opts.headers || {}),
   };
-  if (opts.auth) {
-    const token = getAccessToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
   }
   async function doFetch(currentHeaders: Record<string, string>) {
     const response = await fetch(url, {
@@ -52,7 +52,7 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
   }
 
   let { response, payload } = await doFetch(headers);
-  if (response.status === 401 && opts.auth) {
+  if (response.status === 401 && token) {
     try {
       const refreshRes = await fetch(`${base}/auth/refresh`, {
         method: "POST",
@@ -67,8 +67,12 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
           headers["Authorization"] = `Bearer ${nextToken}`;
           ({ response, payload } = await doFetch(headers));
         }
+      } else {
+        setAccessToken(null);
       }
-    } catch {}
+    } catch {
+      setAccessToken(null);
+    }
   }
 
   if (!response.ok) {

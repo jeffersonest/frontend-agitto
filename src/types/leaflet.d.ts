@@ -4,6 +4,7 @@ export type LeafletMap = {
   setZoom(z: number): void;
   setView(latlng: [number, number], zoom: number): LeafletMap;
   removeLayer(layer: unknown): void;
+  invalidateSize(): void;
 };
 
 export type TileLayer = {

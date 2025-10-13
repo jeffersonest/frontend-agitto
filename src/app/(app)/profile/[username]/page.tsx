@@ -41,18 +41,20 @@ export default function UserProfilePage() {
               ) : (
                 <div className="grid gap-6 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
                   {interestedEvents.map((ev: EventEntity) => (
-                    <EventCard
-                      key={ev.id}
-                      id={ev.id}
-                      title={ev.title}
-                      startDate={ev.startDate}
-                      locationName={ev.locationName}
-                      locationAddress={ev.locationAddress}
-                      coverImageUrl={ev.coverImageUrl}
-                      tags={ev.tags}
-                      attendeeCount={ev.attendeeCount}
-                      ownerUsername={ev?.owner?.username || null}
-                    />
+                  <EventCard
+                    key={ev.id}
+                    id={ev.id}
+                    title={ev.title}
+                    startDate={ev.startDate}
+                    locationName={ev.locationName}
+                    locationAddress={ev.locationAddress}
+                    coverImageUrl={ev.coverImageUrl}
+                    tags={ev.tags}
+                    attendeeCount={ev.attendeeCount}
+                    ownerUsername={ev?.owner?.username || null}
+                    likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
+                    rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
+                  />
                   ))}
                 </div>
               )}
@@ -69,18 +71,20 @@ export default function UserProfilePage() {
               ) : (
                 <div className="grid gap-6 [grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
                   {attendedEvents.map((ev: EventEntity) => (
-                    <EventCard
-                      key={ev.id}
-                      id={ev.id}
-                      title={ev.title}
-                      startDate={ev.startDate}
-                      locationName={ev.locationName}
-                      locationAddress={ev.locationAddress}
-                      coverImageUrl={ev.coverImageUrl}
-                      tags={ev.tags}
-                      attendeeCount={ev.attendeeCount}
-                      ownerUsername={ev?.owner?.username || null}
-                    />
+                  <EventCard
+                    key={ev.id}
+                    id={ev.id}
+                    title={ev.title}
+                    startDate={ev.startDate}
+                    locationName={ev.locationName}
+                    locationAddress={ev.locationAddress}
+                    coverImageUrl={ev.coverImageUrl}
+                    tags={ev.tags}
+                    attendeeCount={ev.attendeeCount}
+                    ownerUsername={ev?.owner?.username || null}
+                    likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
+                    rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
+                  />
                   ))}
                 </div>
               )}

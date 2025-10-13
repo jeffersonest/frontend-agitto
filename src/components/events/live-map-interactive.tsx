@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveMap } from "@/lib/queries/events";
 import { Card } from "@/components/ui/card";
 import type { LiveMapMarker } from "@/lib/api/events";
-import type { Leaflet, LeafletMap, Marker, LayerGroup } from "@/types/leaflet";
+import type { Leaflet, LeafletMap, LayerGroup } from "@/types/leaflet";
 
 function useLeaflet() {
   const [leafletReady, setLeafletReady] = useState(false);
@@ -182,14 +182,50 @@ export default function LiveMapInteractive() {
       },
     }) : L.layerGroup());
     const group: LayerGroup = buildGroup();
+    const now = Date.now();
+    const getColor = (mm: LiveMapMarker) => {
+      const purple = "#9333EA"; // futuros
+      const tealC = teal || "#24BFBF"; // acontecendo
+      if (mm.status === "ongoing") return tealC;
+      if (mm.status === "future") return purple;
+      if (mm.start) {
+        const s = Date.parse(mm.start);
+        const e = mm.end ? Date.parse(mm.end) : s;
+        if (!Number.isNaN(s)) {
+          if (s <= now && now <= (Number.isNaN(e) ? s : e)) return tealC;
+          if (s > now) return purple;
+        }
+      }
+      return purple;
+    };
+
+    const useCircles = validMarkers.length <= 150 || !L.markerClusterGroup;
     validMarkers.forEach((m: LiveMapMarker) => {
-      const icon = L.divIcon({
-        className: "",
-        html: `<div style="width:14px;height:14px;border-radius:9999px;border:2px solid ${teal};background:${teal}33"></div>`,
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-      });
-      const marker = L.marker([m.lat, m.lng], { icon });
+      const color = getColor(m);
+      let layer: unknown;
+      if (useCircles && (L as unknown as { circleMarker?: unknown }).circleMarker) {
+        const cm = (L as unknown as { circleMarker: (latlng: [number, number], opts: Record<string, unknown>) => unknown }).circleMarker([m.lat, m.lng], {
+          radius: 6,
+          color,
+          weight: 2,
+          opacity: 1,
+          fillColor: `${color}33`,
+          fillOpacity: 0.6,
+        });
+        // @ts-expect-error circle marker click
+        cm.on?.('click', () => { window.location.href = `/events/${m.id}`; });
+        layer = cm;
+      } else {
+        const icon = L.divIcon({
+          className: "",
+          html: `<div style=\"width:14px;height:14px;border-radius:9999px;border:2px solid ${color};background:${color}33\"></div>`,
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        });
+        const marker = L.marker([m.lat, m.lng], { icon });
+        marker.on('click', () => { window.location.href = `/events/${m.id}`; });
+        layer = marker;
+      }
       const uname = (m?.owner?.username || m?.ownerUsername || m?.username || "").toString();
       const showU = uname && uname.toLowerCase() !== "insecure";
       const content = `
@@ -200,9 +236,9 @@ export default function LiveMapInteractive() {
           </div>
           <div style=\"color:#6B7280\">${m.locationName || "Local a definir"}</div>
         </div>`;
-      (marker as Marker).bindTooltip(content, { direction: 'top', opacity: 1, sticky: true, className: 'agitto-map-tip', offset: [0, -8] });
-      (marker as Marker).on('click', () => { window.location.href = `/events/${m.id}`; });
-      group.addLayer(marker);
+      // @ts-expect-error bindTooltip on both marker/circle
+      layer.bindTooltip?.(content, { direction: 'top', opacity: 1, sticky: true, className: 'agitto-map-tip', offset: [0, -8] });
+      group.addLayer(layer);
     });
     // Defer adding group to after initial tiles, to avoid jank
     const addGroup = () => { try { group.addTo(map); } catch {} };

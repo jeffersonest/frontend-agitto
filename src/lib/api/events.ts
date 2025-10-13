@@ -33,10 +33,11 @@ export interface EventEntity {
     profileImageUrl?: string | null;
     username?: string | null;
   };
-  viewer?: {
-    likedByMe: boolean;
-    rsvpStatus: "GOING" | "INTERESTED" | "DECLINED" | null;
-    canEdit: boolean;
+  userInteraction?: {
+    isGoing: boolean;
+    isInterested: boolean;
+    isLiked: boolean;
+    isOwner: boolean;
   };
 }
 
@@ -143,6 +144,10 @@ export interface LiveMapMarker {
   owner?: { username?: string | null } | null;
   ownerUsername?: string | null;
   username?: string | null;
+  start?: string;
+  end?: string | null;
+  // Optional hint from backend about temporal status
+  status?: "past" | "ongoing" | "future";
 }
 
 export async function listLiveMap(params: Record<string, string | number | undefined> = {}) {

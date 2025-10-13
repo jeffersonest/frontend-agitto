@@ -4,6 +4,12 @@ import UsernameChip from "@/components/ui/username-chip";
 import { MapPin, Users } from "lucide-react";
 import { categoryFromTags, categoryColorHex, categoryEmoji } from "@/lib/events/category";
 import { formatEventDate, formatLocationShort } from "@/lib/events/format";
+import { useState, useEffect, type MouseEvent } from "react";
+import { IconLike, IconInterest, IconGoing } from "@/components/ui/icons";
+import { toggleLike, setRsvp, deleteRsvp } from "@/lib/api/social";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { patchEventInCaches } from "@/lib/events/cache";
 
 type Props = {
   id: string;
@@ -15,6 +21,8 @@ type Props = {
   tags?: string[];
   attendeeCount?: number;
   ownerUsername?: string | null;
+  likedByMe?: boolean;
+  rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null;
 };
 
 export default function PopularEventCard({
@@ -26,7 +34,9 @@ export default function PopularEventCard({
   coverImageUrl,
   tags,
   attendeeCount,
-  ownerUsername
+  ownerUsername,
+  likedByMe,
+  rsvpStatus
 }: Props) {
   const category = categoryFromTags(tags);
   const sportColor = categoryColorHex(category);
@@ -34,6 +44,64 @@ export default function PopularEventCard({
   const dateText = formatEventDate(startDate);
   const localText = formatLocationShort(locationName || undefined, locationAddress || undefined);
   const showUsername = ownerUsername && ownerUsername.toLowerCase() !== "insecure" ? ownerUsername : null;
+  const [liked, setLiked] = useState<boolean>(Boolean(likedByMe));
+  const [rsvp, setRsvpState] = useState<"GOING" | "INTERESTED" | "DECLINED" | null>(rsvpStatus ?? null);
+  const qc = useQueryClient();
+
+  // Sync local state from server props on initial fetch/refetch
+  useEffect(() => { setLiked(Boolean(likedByMe)); }, [likedByMe]);
+  useEffect(() => { setRsvpState(rsvpStatus ?? null); }, [rsvpStatus]);
+
+  async function onToggleLike(e: MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    const prev = liked;
+    setLiked(!prev);
+    try {
+      await toggleLike(id);
+      patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), likedByMe: !prev } }));
+    } catch {
+      setLiked(prev);
+      toast.error("Falha ao curtir");
+    }
+  }
+
+  async function onToggleInterest(e: MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    const prev = rsvp;
+    try {
+      if (rsvp === "INTERESTED") {
+        setRsvpState(null);
+        await deleteRsvp(id);
+        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: null } }));
+      } else {
+        setRsvpState("INTERESTED");
+        await setRsvp(id, "INTERESTED");
+        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: "INTERESTED" } }));
+      }
+    } catch {
+      setRsvpState(prev);
+      toast.error("Falha ao atualizar interesse");
+    }
+  }
+
+  async function onToggleGoing(e: MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    const prev = rsvp;
+    try {
+      if (rsvp === "GOING") {
+        setRsvpState(null);
+        await deleteRsvp(id);
+        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: null } }));
+      } else {
+        setRsvpState("GOING");
+        await setRsvp(id, "GOING");
+        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: "GOING" } }));
+      }
+    } catch {
+      setRsvpState(prev);
+      toast.error("Falha ao atualizar participação");
+    }
+  }
 
   return (
     <Link
@@ -69,6 +137,35 @@ export default function PopularEventCard({
             <span>{emoji}</span>
             <span>{category}</span>
           </span>
+        </div>
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          <button
+            type="button"
+            className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white"
+            aria-label="Curtir"
+            title="Curtir"
+            onClick={onToggleLike}
+          >
+            <IconLike active={liked} />
+          </button>
+          <button
+            type="button"
+            className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white"
+            aria-label="Tenho interesse"
+            title="Tenho interesse"
+            onClick={onToggleInterest}
+          >
+            <IconInterest active={rsvp === "INTERESTED"} />
+          </button>
+          <button
+            type="button"
+            className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white"
+            aria-label="Eu vou"
+            title="Eu vou"
+            onClick={onToggleGoing}
+          >
+            <IconGoing active={rsvp === "GOING"} />
+          </button>
         </div>
       </div>
 

@@ -76,6 +76,8 @@ export default function PopularRow({ myId }: { myId: string | null }) {
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
                   ownerUsername={ev.owner?.username ?? null}
+                  likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
+                  rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
                 />
               </div>
             ))}

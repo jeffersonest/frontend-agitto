@@ -14,7 +14,7 @@ import PopularRow from "@/components/events/popular-row";
 import { GradientHeader } from "@/components/ui/gradient-header";
 
 export default function EventsPage() {
-  const [tab, setTab] = useState<"nearby" | "following" | "discovery">(() => (typeof window !== "undefined" ? ((localStorage.getItem("agitto:feedTab") as "nearby" | "following" | "discovery") || "nearby") : "nearby"));
+  const [tab, setTab] = useState<"nearby" | "following" | "discovery">("nearby");
   const nearby = useInfiniteEvents({ status: "PUBLISHED", take: 12 }, { enabled: tab === "nearby" });
   const following = useFollowingFeedInfinite({ take: 12, enabled: tab === "following" });
   const discovery = useDiscoveryInfinite({ take: 12, enabled: tab === "discovery" });
@@ -27,6 +27,13 @@ export default function EventsPage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
 
+  useEffect(() => {
+    // Initialize tab from localStorage after mount to avoid SSR hydration mismatch
+    try {
+      const saved = typeof window !== "undefined" ? (localStorage.getItem("agitto:feedTab") as "nearby" | "following" | "discovery" | null) : null;
+      if (saved === "nearby" || saved === "following" || saved === "discovery") setTab(saved);
+    } catch {}
+  }, []);
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -144,6 +151,8 @@ export default function EventsPage() {
                   attendeeCount={ev.attendeeCount}
                   isOwner={myId ? ev.ownerId === myId : false}
                   ownerUsername={(ev as { owner?: { username?: string } })?.owner?.username || null}
+                  likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
+                  rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
                 />
               ))}
             </div>

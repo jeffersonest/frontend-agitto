@@ -46,7 +46,7 @@ export default function AuthSplitScreen({ leftTitle, leftSubtitle, leftCta, tone
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-6">
           <div className="flex justify-center">
-            <Logo width={140} height={48} className="h-12" />
+            <Logo size="xl" animated />
           </div>
           {children}
         </div>
