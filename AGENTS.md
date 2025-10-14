@@ -41,3 +41,33 @@ Implementation tips
 - Keep forms `max-w-md`, spacing `space-y-4` e textos de suporte com `text-foreground/70`.
 - Prefer `Card` for auth boxes; do not change its base styles without discussion.
 
+State and interactions
+- Use Zustand store `useEventInteractions` (`src/lib/stores/eventInteractionsStore.ts`) as the single source of truth for per‑event user state: `isLiked`, `isInterested`, `isGoing`, `isOwner`.
+- Seed the store after fetching events by calling `setInteractions(events)`; all cards read from the store instead of props.
+- Mutations (like/interest/going) must optimistically update the store and then call the API (`toggleLike`, `setRsvp`, `deleteRsvp`). On failure, revert and toast an error.
+- Do NOT wrap entire cards in `<a>`; use a clickable container (role="link") to allow internal buttons/links to work and stop propagation.
+
+Live map performance
+- Leaflet is lazy‑loaded with CDN fallback and preconnects. See `src/components/events/live-map-interactive.tsx`.
+- Use `preferCanvas`, invalidate size after first paint, and add an IntersectionObserver to initialize only when visible.
+- Use `circleMarker` for ≤150 points and cluster otherwise. Filter out invalid markers (no lat/lng).
+- Colors: future (purple `#9333EA`), ongoing (teal `#24BFBF`).
+
+Cards and badges
+- Category badge in cards must use Tailwind classes from `categoryColor` (e.g. `bg-…`), not inline hex.
+- `UsernameChip` is the standard chip for @user (link or button mode) with hover/ring.
+
+Notifications
+- New event notification types: `EVENT_TODAY`, `EVENT_TOMORROW`, `EVENT_INTEREST_TOMORROW`, `EVENT_CANCELLED`, `EVENT_DATE_CHANGED`, `EVENT_LOCATION_CHANGED` (see `src/lib/api/notifications.ts`).
+- UserMenu supports a discreet event‑only filter (funnel icon) and a 60s refetch with a lightweight toast for newest event notification.
+
+Calendar
+- "Meus eventos" tem abas Grade/Calendário. O calendário mensal usa `useMyCalendar` (cores já fornecidas pelo backend) em `src/components/events/my-events-calendar.tsx`.
+
+Logos
+- Use `<Logo size="sm|md|lg|xl|xxl" />` (component) em vez de números soltos; o componente troca automatico black/white no dark mode.
+
+Lint and SSR
+- Sem `any`; tipar utilitários (ex.: stubs do Leaflet em `src/types/leaflet.d.ts`).
+- Respeite `react-hooks/exhaustive-deps`; derive valores com `useMemo`/`useCallback`.
+- Evite hidratação divergente: não ler `localStorage` em initializers do `useState`; inicialize no `useEffect` pós‑mount.

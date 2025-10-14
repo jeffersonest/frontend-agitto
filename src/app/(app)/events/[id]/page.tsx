@@ -21,6 +21,7 @@ import { setRsvp, deleteRsvp, toggleLike } from "@/lib/api/social";
 import AttendeeList from "@/components/users/attendee-list";
 import LikesList from "@/components/users/likes-list";
 import CommentsSection from "@/components/events/comments";
+import { useEventInteractions } from "@/lib/stores/eventInteractionsStore";
 
 export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
@@ -34,22 +35,36 @@ export default function EventDetailPage() {
   const [pendingCover, setPendingCover] = useState<string | null>(null);
   const attendeesGoing = useAttendees(id, "GOING");
   const likes = useLikes(id);
-  const [viewerLiked, setViewerLiked] = useState<boolean>(false);
-  const [viewerRsvp, setViewerRsvp] = useState<"GOING" | "INTERESTED" | "DECLINED" | null>(null);
   const [likesCount, setLikesCount] = useState<number>(0);
   const [attendeeCount, setAttendeeCount] = useState<number>(0);
+  const setInteractions = useEventInteractions((state) => state.setInteractions);
+  const updateInteraction = useEventInteractions((state) => state.updateInteraction);
+  const interaction = useEventInteractions((state) => state.interactions[id]);
+
+  const viewerLiked = interaction?.isLiked ?? false;
+  const viewerRsvp = interaction?.isGoing ? "GOING" : (interaction?.isInterested ? "INTERESTED" : null);
+
   useEffect(() => {
     if (!data?.event) return;
-    const e = data.event as { 
-      viewer?: { likedByMe?: boolean; rsvpStatus?: string }; 
-      likesCount?: number; 
-      attendeeCount?: number; 
+    const e = data.event as {
+      userInteraction?: { isLiked?: boolean; isGoing?: boolean; isInterested?: boolean; isOwner?: boolean };
+      likesCount?: number;
+      attendeeCount?: number;
     };
-    setViewerLiked(Boolean(e.viewer?.likedByMe));
-    setViewerRsvp((e.viewer?.rsvpStatus as "GOING" | "INTERESTED" | "DECLINED") ?? null);
     setLikesCount(typeof e.likesCount === "number" ? e.likesCount : 0);
     setAttendeeCount(typeof e.attendeeCount === "number" ? e.attendeeCount : 0);
-  }, [data]);
+    if (e.userInteraction) {
+      setInteractions([{
+        id,
+        userInteraction: {
+          isLiked: e.userInteraction.isLiked ?? false,
+          isGoing: e.userInteraction.isGoing ?? false,
+          isInterested: e.userInteraction.isInterested ?? false,
+          isOwner: e.userInteraction.isOwner ?? false,
+        }
+      }]);
+    }
+  }, [data, id, setInteractions]);
 
   useEffect(() => {
     getMe().then((m: unknown) => { 
@@ -166,17 +181,21 @@ export default function EventDetailPage() {
                     size="sm"
                     variant={viewerRsvp === "GOING" ? "accent" : "ghost"}
                     onClick={async () => {
+                      const prev = { isGoing: interaction?.isGoing ?? false, isInterested: interaction?.isInterested ?? false };
                       try {
                         if (viewerRsvp === "GOING") {
+                          updateInteraction(id, { isGoing: false, isInterested: false });
                           await deleteRsvp(id);
-                          setViewerRsvp(null);
                           setAttendeeCount((c) => Math.max(0, c - 1));
                         } else {
+                          updateInteraction(id, { isGoing: true, isInterested: false });
                           const res = await setRsvp(id, "GOING") as { attendeeCount?: number };
-                          setViewerRsvp("GOING");
                           if (typeof res.attendeeCount === "number") setAttendeeCount(res.attendeeCount);
                         }
-                      } catch {}
+                      } catch {
+                        updateInteraction(id, prev);
+                        toast.error("Falha ao atualizar");
+                      }
                     }}
                   >
                     <CalendarCheck2 />
@@ -187,25 +206,43 @@ export default function EventDetailPage() {
                     size="sm"
                     variant={viewerRsvp === "INTERESTED" ? "accent" : "ghost"}
                     onClick={async () => {
+                      const prev = { isGoing: interaction?.isGoing ?? false, isInterested: interaction?.isInterested ?? false };
                       try {
                         if (viewerRsvp === "INTERESTED") {
+                          updateInteraction(id, { isInterested: false, isGoing: false });
                           await deleteRsvp(id);
-                          setViewerRsvp(null);
                         } else {
+                          updateInteraction(id, { isInterested: true, isGoing: false });
                           const res = await setRsvp(id, "INTERESTED") as { attendeeCount?: number };
-                          setViewerRsvp("INTERESTED");
                           if (typeof res.attendeeCount === "number") setAttendeeCount(res.attendeeCount);
                         }
-                      } catch {}
+                      } catch {
+                        updateInteraction(id, prev);
+                        toast.error("Falha ao atualizar");
+                      }
                     }}
                   >
                     {viewerRsvp === "INTERESTED" ? <BookmarkCheck /> : <Bookmark />}
                     <span className="sm:hidden">Int.</span>
                     <span className="hidden sm:inline">Interesse</span>
                   </Button>
-                  <Button className="w-[112px] justify-center" size="sm" title="Curtir" variant={viewerLiked ? "accent" : "ghost"} onClick={async () => {
-                    try { const res = await toggleLike(id) as { liked: boolean; likesCount?: number }; setViewerLiked(res.liked); if (typeof res.likesCount === "number") setLikesCount(res.likesCount); } catch {}
-                  }}>
+                  <Button
+                    className="w-[112px] justify-center"
+                    size="sm"
+                    title="Curtir"
+                    variant={viewerLiked ? "accent" : "ghost"}
+                    onClick={async () => {
+                      const prev = viewerLiked;
+                      try {
+                        updateInteraction(id, { isLiked: !prev });
+                        const res = await toggleLike(id) as { liked: boolean; likesCount?: number };
+                        if (typeof res.likesCount === "number") setLikesCount(res.likesCount);
+                      } catch {
+                        updateInteraction(id, { isLiked: prev });
+                        toast.error("Falha ao curtir");
+                      }
+                    }}
+                  >
                     <Heart />
                     <span>{viewerLiked ? "Curtido" : "Curtir"}</span>
                   </Button>

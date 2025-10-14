@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import type { EventEntity } from "@/lib/api/events";
+import { useEventInteractions } from "@/lib/stores/eventInteractionsStore";
 
 export default function PopularRow({ myId }: { myId: string | null }) {
   void myId;
@@ -13,7 +14,17 @@ export default function PopularRow({ myId }: { myId: string | null }) {
   const weekEvents = useMemo(() => week?.events ?? [], [week]);
   const useTrending = weekEvents.length === 0;
   const trending = useTrendingInfinite({ take: 20 });
-  const events = useTrending ? (trending.data?.pages.flatMap((p) => p.events) ?? []) : weekEvents;
+  const events = useMemo(
+    () => (useTrending ? (trending.data?.pages.flatMap((p) => p.events) ?? []) : weekEvents),
+    [useTrending, trending.data?.pages, weekEvents]
+  );
+  const setInteractions = useEventInteractions((state) => state.setInteractions);
+
+  useEffect(() => {
+    if (events.length > 0) {
+      setInteractions(events);
+    }
+  }, [events, setInteractions]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "start",
@@ -76,8 +87,6 @@ export default function PopularRow({ myId }: { myId: string | null }) {
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
                   ownerUsername={ev.owner?.username ?? null}
-                  likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
-                  rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
                 />
               </div>
             ))}

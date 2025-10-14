@@ -1,4 +1,4 @@
-import { http, setAccessToken } from "@/lib/api/http";
+import { http, setAccessToken, getAccessToken } from "@/lib/api/http";
 import { getApiBaseUrl } from "@/lib/config";
 
 export async function requestEmailCode(email: string) {
@@ -76,6 +76,12 @@ export async function uploadProfileImage(file: File) {
   const res = await fetch(`${getApiBaseUrl()}/users/me/upload-profile-image`, {
     method: "POST",
     body: form,
+    headers: (() => {
+      const h: Record<string, string> = {};
+      const token = getAccessToken();
+      if (token) h["Authorization"] = `Bearer ${token}`;
+      return h;
+    })(),
     credentials: "include",
   });
   const data = await res.json().catch(() => undefined);

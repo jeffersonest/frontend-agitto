@@ -10,7 +10,7 @@ export interface UserInteraction {
 interface EventInteractionsState {
   interactions: Record<string, UserInteraction>;
   setInteraction: (eventId: string, interaction: UserInteraction) => void;
-  setInteractions: (events: Array<{ id: string; userInteraction: UserInteraction }>) => void;
+  setInteractions: (events: Array<{ id: string; userInteraction?: UserInteraction }>) => void;
   updateInteraction: (eventId: string, updates: Partial<UserInteraction>) => void;
   clearInteractions: () => void;
 }
@@ -30,7 +30,9 @@ export const useEventInteractions = create<EventInteractionsState>((set) => ({
     set((state) => {
       const newInteractions = { ...state.interactions };
       events.forEach((event) => {
-        newInteractions[event.id] = event.userInteraction;
+        if (event.userInteraction) {
+          newInteractions[event.id] = event.userInteraction;
+        }
       });
       return { interactions: newInteractions };
     }),

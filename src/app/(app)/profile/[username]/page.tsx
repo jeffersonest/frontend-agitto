@@ -7,7 +7,8 @@ import type { EventEntity } from "@/lib/api/events";
 import { Card } from "@/components/ui/card";
 import EventCard from "@/components/events/event-card";
 import UserList from "@/components/users/user-list";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useEffect } from "react";
+import { useEventInteractions } from "@/lib/stores/eventInteractionsStore";
 
 export default function UserProfilePage() {
   const params = useParams<{ username: string }>();
@@ -21,6 +22,14 @@ export default function UserProfilePage() {
   const interestedEvents = useMemo(() => (interested.data?.pages || []).flatMap((p) => p.events || []), [interested.data]);
   const attendedEvents = useMemo(() => (attended.data?.pages || []).flatMap((p) => p.events || []), [attended.data]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const setInteractions = useEventInteractions((state) => state.setInteractions);
+
+  useEffect(() => {
+    const allEvents = [...interestedEvents, ...attendedEvents];
+    if (allEvents.length > 0) {
+      setInteractions(allEvents);
+    }
+  }, [interestedEvents, attendedEvents, setInteractions]);
 
   return (
     <div className="min-h-screen">
@@ -52,8 +61,6 @@ export default function UserProfilePage() {
                     tags={ev.tags}
                     attendeeCount={ev.attendeeCount}
                     ownerUsername={ev?.owner?.username || null}
-                    likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
-                    rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
                   />
                   ))}
                 </div>
@@ -82,8 +89,6 @@ export default function UserProfilePage() {
                     tags={ev.tags}
                     attendeeCount={ev.attendeeCount}
                     ownerUsername={ev?.owner?.username || null}
-                    likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
-                    rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
                   />
                   ))}
                 </div>

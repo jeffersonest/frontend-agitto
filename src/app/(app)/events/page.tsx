@@ -10,6 +10,7 @@ import { getMe } from "@/lib/api/auth";
 import EventCard from "@/components/events/event-card";
 import LiveMapInteractive from "@/components/events/live-map-interactive";
 import PopularRow from "@/components/events/popular-row";
+import { useEventInteractions } from "@/lib/stores/eventInteractionsStore";
 
 import { GradientHeader } from "@/components/ui/gradient-header";
 
@@ -26,6 +27,13 @@ export default function EventsPage() {
   const events: EventEntity[] = useMemo(() => (data?.pages || []).flatMap((p: { events: EventEntity[] }) => p.events), [data]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
+  const setInteractions = useEventInteractions((state) => state.setInteractions);
+
+  useEffect(() => {
+    if (events.length > 0) {
+      setInteractions(events);
+    }
+  }, [events, setInteractions]);
 
   useEffect(() => {
     // Initialize tab from localStorage after mount to avoid SSR hydration mismatch
@@ -72,7 +80,7 @@ export default function EventsPage() {
   return (
     <div className="min-h-screen">
       <GradientHeader />
-      <div className="relative w-full pt-16">
+      <div className="relative w-full pt-6">
         <div className="mx-auto max-w-8xl px-6">
           <div className="rounded-2xl bg-white/85 backdrop-blur p-5 flex items-center justify-between shadow-sm">
             <h1 className="text-xl sm:text-2xl font-semibold">O que está rolando perto de você</h1>
@@ -149,10 +157,7 @@ export default function EventsPage() {
                   coverImageUrl={ev.coverImageUrl}
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
-                  isOwner={myId ? ev.ownerId === myId : false}
                   ownerUsername={(ev as { owner?: { username?: string } })?.owner?.username || null}
-                  likedByMe={(ev as { viewer?: { likedByMe?: boolean } })?.viewer?.likedByMe ?? false}
-                  rsvpStatus={(ev as { viewer?: { rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null } })?.viewer?.rsvpStatus ?? null}
                 />
               ))}
             </div>

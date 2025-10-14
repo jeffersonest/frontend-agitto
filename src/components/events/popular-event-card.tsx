@@ -4,12 +4,11 @@ import UsernameChip from "@/components/ui/username-chip";
 import { MapPin, Users } from "lucide-react";
 import { categoryFromTags, categoryColorHex, categoryEmoji } from "@/lib/events/category";
 import { formatEventDate, formatLocationShort } from "@/lib/events/format";
-import { useState, useEffect, type MouseEvent } from "react";
+import { type MouseEvent } from "react";
 import { IconLike, IconInterest, IconGoing } from "@/components/ui/icons";
 import { toggleLike, setRsvp, deleteRsvp } from "@/lib/api/social";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { patchEventInCaches } from "@/lib/events/cache";
+import { useEventInteractions } from "@/lib/stores/eventInteractionsStore";
 
 type Props = {
   id: string;
@@ -21,8 +20,6 @@ type Props = {
   tags?: string[];
   attendeeCount?: number;
   ownerUsername?: string | null;
-  likedByMe?: boolean;
-  rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null;
 };
 
 export default function PopularEventCard({
@@ -34,9 +31,7 @@ export default function PopularEventCard({
   coverImageUrl,
   tags,
   attendeeCount,
-  ownerUsername,
-  likedByMe,
-  rsvpStatus
+  ownerUsername
 }: Props) {
   const category = categoryFromTags(tags);
   const sportColor = categoryColorHex(category);
@@ -44,61 +39,63 @@ export default function PopularEventCard({
   const dateText = formatEventDate(startDate);
   const localText = formatLocationShort(locationName || undefined, locationAddress || undefined);
   const showUsername = ownerUsername && ownerUsername.toLowerCase() !== "insecure" ? ownerUsername : null;
-  const [liked, setLiked] = useState<boolean>(Boolean(likedByMe));
-  const [rsvp, setRsvpState] = useState<"GOING" | "INTERESTED" | "DECLINED" | null>(rsvpStatus ?? null);
-  const qc = useQueryClient();
 
-  // Sync local state from server props on initial fetch/refetch
-  useEffect(() => { setLiked(Boolean(likedByMe)); }, [likedByMe]);
-  useEffect(() => { setRsvpState(rsvpStatus ?? null); }, [rsvpStatus]);
+  const interaction = useEventInteractions((state) => state.interactions[id]);
+  const updateInteraction = useEventInteractions((state) => state.updateInteraction);
+
+  const liked = interaction?.isLiked ?? false;
+  const isGoing = interaction?.isGoing ?? false;
+  const isInterested = interaction?.isInterested ?? false;
 
   async function onToggleLike(e: MouseEvent) {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     const prev = liked;
-    setLiked(!prev);
+
+    updateInteraction(id, { isLiked: !prev });
+
     try {
       await toggleLike(id);
-      patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), likedByMe: !prev } }));
     } catch {
-      setLiked(prev);
+      updateInteraction(id, { isLiked: prev });
       toast.error("Falha ao curtir");
     }
   }
 
   async function onToggleInterest(e: MouseEvent) {
-    e.preventDefault(); e.stopPropagation();
-    const prev = rsvp;
+    e.preventDefault();
+    e.stopPropagation();
+    const prev = isInterested;
+
     try {
-      if (rsvp === "INTERESTED") {
-        setRsvpState(null);
+      if (isInterested) {
+        updateInteraction(id, { isInterested: false, isGoing: false });
         await deleteRsvp(id);
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: null } }));
       } else {
-        setRsvpState("INTERESTED");
+        updateInteraction(id, { isInterested: true, isGoing: false });
         await setRsvp(id, "INTERESTED");
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: "INTERESTED" } }));
       }
     } catch {
-      setRsvpState(prev);
+      updateInteraction(id, { isInterested: prev });
       toast.error("Falha ao atualizar interesse");
     }
   }
 
   async function onToggleGoing(e: MouseEvent) {
-    e.preventDefault(); e.stopPropagation();
-    const prev = rsvp;
+    e.preventDefault();
+    e.stopPropagation();
+    const prev = isGoing;
+
     try {
-      if (rsvp === "GOING") {
-        setRsvpState(null);
+      if (isGoing) {
+        updateInteraction(id, { isGoing: false, isInterested: false });
         await deleteRsvp(id);
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: null } }));
       } else {
-        setRsvpState("GOING");
+        updateInteraction(id, { isGoing: true, isInterested: false });
         await setRsvp(id, "GOING");
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: "GOING" } }));
       }
     } catch {
-      setRsvpState(prev);
+      updateInteraction(id, { isGoing: prev });
       toast.error("Falha ao atualizar participação");
     }
   }
@@ -155,7 +152,7 @@ export default function PopularEventCard({
             title="Tenho interesse"
             onClick={onToggleInterest}
           >
-            <IconInterest active={rsvp === "INTERESTED"} />
+            <IconInterest active={isInterested} />
           </button>
           <button
             type="button"
@@ -164,7 +161,7 @@ export default function PopularEventCard({
             title="Eu vou"
             onClick={onToggleGoing}
           >
-            <IconGoing active={rsvp === "GOING"} />
+            <IconGoing active={isGoing} />
           </button>
         </div>
       </div>

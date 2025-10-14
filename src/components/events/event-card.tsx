@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, type MouseEvent } from "react";
+import { type MouseEvent } from "react";
 import UsernameChip from "@/components/ui/username-chip";
 import { MapPin, Pencil } from "lucide-react";
 import { IconLike, IconInterest, IconGoing } from "@/components/ui/icons";
@@ -8,8 +8,7 @@ import { toggleLike, setRsvp, deleteRsvp } from "@/lib/api/social";
 import { toast } from "sonner";
 import { categoryColor, categoryEmoji, categoryFromTags, categoryTint } from "@/lib/events/category";
 import { formatEventDate, formatLocationShort } from "@/lib/events/format";
-import { useQueryClient } from "@tanstack/react-query";
-import { patchEventInCaches } from "@/lib/events/cache";
+import { useEventInteractions } from "@/lib/stores/eventInteractionsStore";
 
 type Props = {
   id: string;
@@ -20,13 +19,10 @@ type Props = {
   coverImageUrl?: string | null;
   tags?: string[];
   attendeeCount?: number;
-  isOwner?: boolean;
   ownerUsername?: string | null;
-  likedByMe?: boolean;
-  rsvpStatus?: "GOING" | "INTERESTED" | "DECLINED" | null;
 };
 
-export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, isOwner, ownerUsername, likedByMe, rsvpStatus }: Props) {
+export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, ownerUsername }: Props) {
   const router = useRouter();
   const cat = categoryFromTags(tags);
   const colorClass = categoryColor(cat);
@@ -34,71 +30,68 @@ export default function EventCard({ id, title, startDate, locationName, location
   const dateText = formatEventDate(startDate);
   const localText = formatLocationShort(locationName || undefined, locationAddress || undefined);
   const showUsername = ownerUsername && ownerUsername.toLowerCase() !== "insecure" ? ownerUsername : null;
-  const [liked, setLiked] = useState<boolean>(Boolean(likedByMe));
-  const [rsvp, setRsvpState] = useState<"GOING" | "INTERESTED" | "DECLINED" | null>(rsvpStatus ?? null);
-  const qc = useQueryClient();
 
-  // Sync local state when server props change (initial load/refetch)
-  useEffect(() => {
-    setLiked(Boolean(likedByMe));
-  }, [likedByMe]);
-  useEffect(() => {
-    setRsvpState(rsvpStatus ?? null);
-  }, [rsvpStatus]);
+  const interaction = useEventInteractions((state) => state.interactions[id]);
+  const updateInteraction = useEventInteractions((state) => state.updateInteraction);
+
+  const liked = interaction?.isLiked ?? false;
+  const isGoing = interaction?.isGoing ?? false;
+  const isInterested = interaction?.isInterested ?? false;
+  const isOwner = interaction?.isOwner ?? false;
 
   async function onToggleLike(e: MouseEvent) {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     const prev = liked;
-    setLiked(!prev);
+
+    updateInteraction(id, { isLiked: !prev });
+
     try {
       await toggleLike(id);
-      patchEventInCaches(qc, id, (ev) => ({
-        ...ev,
-        viewer: { ...(ev.viewer || {}), likedByMe: !prev },
-      }));
     } catch {
-      setLiked(prev);
+      updateInteraction(id, { isLiked: prev });
       toast.error("Falha ao curtir");
     }
   }
 
   async function onToggleInterest(e: MouseEvent) {
-    e.preventDefault(); e.stopPropagation();
-    const prev = rsvp;
+    e.preventDefault();
+    e.stopPropagation();
+    const prev = isInterested;
+
     try {
-      if (rsvp === "INTERESTED") {
-        setRsvpState(null);
+      if (isInterested) {
+        updateInteraction(id, { isInterested: false, isGoing: false });
         await deleteRsvp(id);
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: null } }));
       } else {
-        setRsvpState("INTERESTED");
+        updateInteraction(id, { isInterested: true, isGoing: false });
         await setRsvp(id, "INTERESTED");
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: "INTERESTED" } }));
       }
     } catch {
-      setRsvpState(prev);
+      updateInteraction(id, { isInterested: prev });
       toast.error("Falha ao atualizar interesse");
     }
   }
 
   async function onToggleGoing(e: MouseEvent) {
-    e.preventDefault(); e.stopPropagation();
-    const prev = rsvp;
+    e.preventDefault();
+    e.stopPropagation();
+    const prev = isGoing;
+
     try {
-      if (rsvp === "GOING") {
-        setRsvpState(null);
+      if (isGoing) {
+        updateInteraction(id, { isGoing: false, isInterested: false });
         await deleteRsvp(id);
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: null } }));
       } else {
-        setRsvpState("GOING");
+        updateInteraction(id, { isGoing: true, isInterested: false });
         await setRsvp(id, "GOING");
-        patchEventInCaches(qc, id, (ev) => ({ ...ev, viewer: { ...(ev.viewer || {}), rsvpStatus: "GOING" } }));
       }
     } catch {
-      setRsvpState(prev);
+      updateInteraction(id, { isGoing: prev });
       toast.error("Falha ao atualizar participação");
     }
   }
+
   return (
     <div
       role="link"
@@ -146,7 +139,7 @@ export default function EventCard({ id, title, startDate, locationName, location
           onClick={onToggleInterest}
           title="Tenho interesse"
         >
-          <IconInterest active={rsvp === "INTERESTED"} />
+          <IconInterest active={isInterested} />
         </button>
         <button
           type="button"
@@ -155,7 +148,7 @@ export default function EventCard({ id, title, startDate, locationName, location
           onClick={onToggleGoing}
           title="Eu vou"
         >
-          <IconGoing active={rsvp === "GOING"} />
+          <IconGoing active={isGoing} />
         </button>
       </div>
       <div className="relative p-4 h-72 flex flex-col justify-end min-h-36">
