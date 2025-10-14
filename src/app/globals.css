@@ -165,37 +165,139 @@
   }
 }
 
-/* Leaflet tooltip styling for live map */
-.leaflet-tooltip.agitto-map-tip {
-  background: color-mix(in oklab, var(--background) 92%, white 8%);
-  color: var(--foreground);
-  border: 0;
-  border-radius: 0.75rem;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  padding: 8px 10px;
-  backdrop-filter: blur(6px);
+/* Mapa Live */
+.leaflet-tooltip.agitto-map-tip-enhanced {
+  border: none !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  padding: 16px !important;
+  pointer-events: auto !important;
+  transform: translateZ(0);
+  will-change: transform;
 }
-.leaflet-tooltip.agitto-map-tip:before { display: none; }
-.leaflet-tooltip.agitto-map-tip .agitto-username-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #fff;
-  color: #111;
-  border-radius: 9999px;
-  padding: 2px 6px;
-  font-weight: 600;
-  text-decoration: none;
-  border: 1px solid rgb(0 0 0 / 0.05);
+
+.leaflet-tooltip.agitto-map-tip-enhanced::before {
+  display: none !important;
 }
-.leaflet-tooltip.agitto-map-tip .agitto-username-chip:hover {
-  color: var(--primary);
-  text-decoration: underline;
-  border-color: color-mix(in oklab, var(--primary) 30%, transparent);
+
+.leaflet-tooltip.agitto-map-tip-enhanced a {
+  pointer-events: auto !important;
+}
+
+.leaflet-tooltip.agitto-map-tip-enhanced a:hover {
+  text-decoration: none !important;
+}
+
+/* Marcadores */
+.agitto-custom-marker {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.agitto-marker-pulse {
+  animation: agittoMarkerPulse 2s infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+@keyframes agittoMarkerPulse {
+  0% {
+    transform: scale(1) translateZ(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15) translateZ(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) translateZ(0);
+    opacity: 1;
+  }
+}
+
+/* Hover effect para marcadores em andamento */
+.agitto-marker-ongoing:hover {
+  transform: scale(1.1) translateZ(0);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: brightness(1.1);
+}
+
+.leaflet-div-icon {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.agitto-map-tip-enhanced * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .theme-primary-lavender {
   --primary: var(--lavender);
   --primary-600: var(--lavender-600);
   --ring: var(--lavender);
+}
+
+/* Enhanced Map Tooltips */
+.leaflet-tooltip.agitto-map-tip-enhanced {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.leaflet-tooltip.agitto-map-tip-enhanced::before {
+  border-top-color: rgba(255, 255, 255, 0.95);
+}
+
+.leaflet-tooltip.agitto-map-tip-enhanced a {
+  transition: all 0.2s ease;
+}
+
+.leaflet-tooltip.agitto-map-tip-enhanced a:hover {
+  transform: scale(1.05);
+}
+
+/* Enhanced Map Markers */
+.agitto-custom-marker {
+  transition: all 0.3s ease;
+}
+
+.agitto-custom-marker:hover {
+  transform: scale(1.1);
+}
+
+.agitto-marker-pulse {
+  animation: agitto-pulse 2s infinite;
+}
+
+@keyframes agitto-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(36, 191, 191, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(36, 191, 191, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(36, 191, 191, 0);
+  }
+}
+
+.agitto-marker-ongoing {
+  animation: agitto-ongoing-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes agitto-ongoing-glow {
+  from {
+    filter: brightness(1);
+  }
+  to {
+    filter: brightness(1.2) saturate(1.1);
+  }
 }

@@ -19,7 +19,7 @@ export function useUserInterested(userId?: string, take: number = 12) {
     queryKey: userKeys.interested(userId || ""),
     queryFn: ({ pageParam }) => listUserEventsInterested(userId as string, { skip: pageParam?.skip ?? 0, take }),
     initialPageParam: { skip: 0, take },
-    getNextPageParam: (last, pages) => (last.events.length < take ? undefined : { skip: (pages.length) * take, take }),
+    getNextPageParam: (last, pages) => ((last?.events?.length || 0) < take ? undefined : { skip: (pages.length) * take, take }),
     enabled: Boolean(userId),
   });
 }
@@ -29,7 +29,7 @@ export function useUserAttended(userId?: string, take: number = 12) {
     queryKey: userKeys.attended(userId || ""),
     queryFn: ({ pageParam }) => listUserEventsAttended(userId as string, { skip: pageParam?.skip ?? 0, take }),
     initialPageParam: { skip: 0, take },
-    getNextPageParam: (last, pages) => (last.events.length < take ? undefined : { skip: (pages.length) * take, take }),
+    getNextPageParam: (last, pages) => ((last?.events?.length || 0) < take ? undefined : { skip: (pages.length) * take, take }),
     enabled: Boolean(userId),
   });
 }

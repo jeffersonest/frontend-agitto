@@ -34,15 +34,16 @@ export default function UsernameChip({ username, href, variant = "white", size =
           e.stopPropagation();
           router.push(to);
         }}
+        title={`@${username}`}
       >
-        @{username}
+        <span className="truncate">@{username}</span>
       </button>
     );
   }
 
   return (
-    <Link href={to} className={base}>
-      @{username}
+    <Link href={to} className={base} title={`@${username}`}>
+      <span className="truncate">@{username}</span>
     </Link>
   );
 }

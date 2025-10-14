@@ -11,11 +11,20 @@ import { useEventInteractions } from "@/lib/stores/eventInteractionsStore";
 export default function PopularRow({ myId }: { myId: string | null }) {
   void myId;
   const { data: week, isLoading } = usePopularWeek({ take: 20 });
-  const weekEvents = useMemo(() => week?.events ?? [], [week]);
+  const weekEvents = useMemo(() => {
+    const allEvents = week?.events ?? [];
+    return allEvents.filter((event: EventEntity) => !event.isEnded);
+  }, [week]);
   const useTrending = weekEvents.length === 0;
   const trending = useTrendingInfinite({ take: 20 });
   const events = useMemo(
-    () => (useTrending ? (trending.data?.pages.flatMap((p) => p.events) ?? []) : weekEvents),
+    () => {
+      if (useTrending) {
+        const allTrendingEvents = trending.data?.pages.flatMap((p) => p.events) ?? [];
+        return allTrendingEvents.filter((event: EventEntity) => !event.isEnded);
+      }
+      return weekEvents;
+    },
     [useTrending, trending.data?.pages, weekEvents]
   );
   const setInteractions = useEventInteractions((state) => state.setInteractions);

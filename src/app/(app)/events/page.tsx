@@ -24,7 +24,10 @@ export default function EventsPage() {
   const fetchNextPage = tab === "nearby" ? nearby.fetchNextPage : (tab === "following" ? following.fetchNextPage : discovery.fetchNextPage);
   const hasNextPage = tab === "nearby" ? nearby.hasNextPage : (tab === "following" ? following.hasNextPage : discovery.hasNextPage);
   const isFetchingNextPage = tab === "nearby" ? nearby.isFetchingNextPage : (tab === "following" ? following.isFetchingNextPage : discovery.isFetchingNextPage);
-  const events: EventEntity[] = useMemo(() => (data?.pages || []).flatMap((p: { events: EventEntity[] }) => p.events), [data]);
+  const events: EventEntity[] = useMemo(() => {
+    const allEvents = (data?.pages || []).flatMap((p: { events: EventEntity[] }) => p.events);
+    return allEvents.filter((event: EventEntity) => !event.isEnded);
+  }, [data]);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
   const setInteractions = useEventInteractions((state) => state.setInteractions);
@@ -36,7 +39,6 @@ export default function EventsPage() {
   }, [events, setInteractions]);
 
   useEffect(() => {
-    // Initialize tab from localStorage after mount to avoid SSR hydration mismatch
     try {
       const saved = typeof window !== "undefined" ? (localStorage.getItem("agitto:feedTab") as "nearby" | "following" | "discovery" | null) : null;
       if (saved === "nearby" || saved === "following" || saved === "discovery") setTab(saved);

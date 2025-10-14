@@ -21,9 +21,10 @@ type Props = {
   attendeeCount?: number;
   ownerUsername?: string | null;
   isEnded?: boolean;
+  badgePosition?: "top" | "bottom";
 };
 
-export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, ownerUsername, isEnded }: Props) {
+export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, ownerUsername, isEnded, badgePosition = "top" }: Props) {
   const router = useRouter();
   const cat = categoryFromTags(tags);
   const colorClass = categoryColor(cat);
@@ -115,19 +116,27 @@ export default function EventCard({ id, title, startDate, locationName, location
     >
       <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: coverImageUrl ? `url(${coverImageUrl})` : "none" }} />
       <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.5)), ${tint}` }} />
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+      <div className={`absolute ${badgePosition === "top" ? "top-3" : "bottom-3"} left-3 z-10 flex ${badgePosition === "top" ? "flex gap-2" : "items-center gap-2 flex-wrap"}`}>
         {showUsername && (
-          <UsernameChip username={showUsername} mode="button" variant="white" size="xs" />
+          <UsernameChip 
+            username={showUsername} 
+            mode="button" 
+            variant="white" 
+            size="xs"
+            className={badgePosition === "bottom" ? "max-w-[90px] truncate" : ""}
+          />
         )}
-        <span className={`rounded-full text-white text-xs px-2 py-0.5 flex items-center gap-1 ${colorClass}`}>
-          <span>{categoryEmoji(cat)}</span>
-          <span>{cat}</span>
-        </span>
-        {isEnded && (
-          <span className="rounded-full bg-gray-700 text-white text-xs px-2 py-0.5 font-medium">
-            Encerrado
+        <div className={badgePosition === "top" ? "flex items-center gap-2" : "contents"}>
+          <span className={`rounded-full text-white text-xs px-2 py-0.5 flex items-center gap-1 whitespace-nowrap ${colorClass}`}>
+            <span>{categoryEmoji(cat)}</span>
+            <span>{cat}</span>
           </span>
-        )}
+          {isEnded && (
+            <span className="rounded-full bg-gray-700 text-white text-xs px-2 py-0.5 font-medium whitespace-nowrap">
+              Encerrado
+            </span>
+          )}
+        </div>
       </div>
       <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
         {isOwner && (

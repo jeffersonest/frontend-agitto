@@ -137,19 +137,25 @@ export default function PopularEventCard({
           </div>
         )}
 
-        <div className="absolute top-3 left-3 flex items-center gap-2">
+        <div className="absolute bottom-3 left-3 flex items-center gap-2 flex-wrap">
           {showUsername && (
-            <UsernameChip username={showUsername} mode="button" variant="white" size="xs" />
+            <UsernameChip 
+              username={showUsername} 
+              mode="button" 
+              variant="white" 
+              size="xs"
+              className="max-w-[90px] truncate"
+            />
           )}
           <span
-            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-xs font-medium capitalize"
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-xs font-medium capitalize whitespace-nowrap"
             style={{ backgroundColor: sportColor }}
           >
             <span>{emoji}</span>
             <span>{category}</span>
           </span>
           {isEnded && (
-            <span className="rounded-full bg-gray-700 text-white text-xs px-3 py-1 font-medium">
+            <span className="rounded-full bg-gray-700 text-white text-xs px-3 py-1 font-medium whitespace-nowrap">
               Encerrado
             </span>
           )}
