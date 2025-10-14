@@ -158,6 +158,7 @@ export default function EventsPage() {
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
                   ownerUsername={(ev as { owner?: { username?: string } })?.owner?.username || null}
+                  isEnded={ev.isEnded}
                 />
               ))}
             </div>

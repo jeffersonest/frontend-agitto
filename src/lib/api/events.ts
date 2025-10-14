@@ -26,6 +26,7 @@ export interface EventEntity {
   createdAt: string;
   updatedAt: string;
   distance?: number;
+  isEnded?: boolean;
   owner?: {
     id: string;
     name?: string | null;

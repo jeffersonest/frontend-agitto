@@ -44,6 +44,8 @@ export default function EventDetailPage() {
   const viewerLiked = interaction?.isLiked ?? false;
   const viewerRsvp = interaction?.isGoing ? "GOING" : (interaction?.isInterested ? "INTERESTED" : null);
 
+  const isEnded = (data?.event as { isEnded?: boolean })?.isEnded ?? false;
+
   useEffect(() => {
     if (!data?.event) return;
     const e = data.event as {
@@ -180,6 +182,8 @@ export default function EventDetailPage() {
                     className="w-[112px] justify-center"
                     size="sm"
                     variant={viewerRsvp === "GOING" ? "accent" : "ghost"}
+                    disabled={isEnded}
+                    title={isEnded ? "Evento encerrado" : "Confirmar presença"}
                     onClick={async () => {
                       const prev = { isGoing: interaction?.isGoing ?? false, isInterested: interaction?.isInterested ?? false };
                       try {
@@ -192,9 +196,15 @@ export default function EventDetailPage() {
                           const res = await setRsvp(id, "GOING") as { attendeeCount?: number };
                           if (typeof res.attendeeCount === "number") setAttendeeCount(res.attendeeCount);
                         }
-                      } catch {
+                      } catch (error: unknown) {
                         updateInteraction(id, prev);
-                        toast.error("Falha ao atualizar");
+                        const err = error as { message?: string };
+                        const msg = err?.message || "";
+                        if (msg.includes("past event") || msg.includes("encerrado")) {
+                          toast.error("Este evento já foi encerrado");
+                        } else {
+                          toast.error("Falha ao atualizar");
+                        }
                       }
                     }}
                   >
@@ -205,6 +215,8 @@ export default function EventDetailPage() {
                     className="w-[112px] justify-center"
                     size="sm"
                     variant={viewerRsvp === "INTERESTED" ? "accent" : "ghost"}
+                    disabled={isEnded}
+                    title={isEnded ? "Evento encerrado" : "Marcar interesse"}
                     onClick={async () => {
                       const prev = { isGoing: interaction?.isGoing ?? false, isInterested: interaction?.isInterested ?? false };
                       try {
@@ -216,9 +228,15 @@ export default function EventDetailPage() {
                           const res = await setRsvp(id, "INTERESTED") as { attendeeCount?: number };
                           if (typeof res.attendeeCount === "number") setAttendeeCount(res.attendeeCount);
                         }
-                      } catch {
+                      } catch (error: unknown) {
                         updateInteraction(id, prev);
-                        toast.error("Falha ao atualizar");
+                        const err = error as { message?: string };
+                        const msg = err?.message || "";
+                        if (msg.includes("past event") || msg.includes("encerrado")) {
+                          toast.error("Este evento já foi encerrado");
+                        } else {
+                          toast.error("Falha ao atualizar");
+                        }
                       }
                     }}
                   >

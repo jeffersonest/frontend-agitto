@@ -20,9 +20,10 @@ type Props = {
   tags?: string[];
   attendeeCount?: number;
   ownerUsername?: string | null;
+  isEnded?: boolean;
 };
 
-export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, ownerUsername }: Props) {
+export default function EventCard({ id, title, startDate, locationName, locationAddress, coverImageUrl, tags, attendeeCount, ownerUsername, isEnded }: Props) {
   const router = useRouter();
   const cat = categoryFromTags(tags);
   const colorClass = categoryColor(cat);
@@ -67,9 +68,15 @@ export default function EventCard({ id, title, startDate, locationName, location
         updateInteraction(id, { isInterested: true, isGoing: false });
         await setRsvp(id, "INTERESTED");
       }
-    } catch {
+    } catch (error: unknown) {
       updateInteraction(id, { isInterested: prev });
-      toast.error("Falha ao atualizar interesse");
+      const err = error as { message?: string };
+      const msg = err?.message || "";
+      if (msg.includes("past event") || msg.includes("encerrado")) {
+        toast.error("Este evento já foi encerrado");
+      } else {
+        toast.error("Falha ao atualizar interesse");
+      }
     }
   }
 
@@ -86,9 +93,15 @@ export default function EventCard({ id, title, startDate, locationName, location
         updateInteraction(id, { isGoing: true, isInterested: false });
         await setRsvp(id, "GOING");
       }
-    } catch {
+    } catch (error: unknown) {
       updateInteraction(id, { isGoing: prev });
-      toast.error("Falha ao atualizar participação");
+      const err = error as { message?: string };
+      const msg = err?.message || "";
+      if (msg.includes("past event") || msg.includes("encerrado")) {
+        toast.error("Este evento já foi encerrado");
+      } else {
+        toast.error("Falha ao atualizar participação");
+      }
     }
   }
 
@@ -110,6 +123,11 @@ export default function EventCard({ id, title, startDate, locationName, location
           <span>{categoryEmoji(cat)}</span>
           <span>{cat}</span>
         </span>
+        {isEnded && (
+          <span className="rounded-full bg-gray-700 text-white text-xs px-2 py-0.5 font-medium">
+            Encerrado
+          </span>
+        )}
       </div>
       <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
         {isOwner && (
@@ -134,19 +152,21 @@ export default function EventCard({ id, title, startDate, locationName, location
         </button>
         <button
           type="button"
-          className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white transition-colors"
+          className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Tenho interesse"
           onClick={onToggleInterest}
-          title="Tenho interesse"
+          title={isEnded ? "Evento encerrado" : "Tenho interesse"}
+          disabled={isEnded}
         >
           <IconInterest active={isInterested} />
         </button>
         <button
           type="button"
-          className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white transition-colors"
+          className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Eu vou"
           onClick={onToggleGoing}
-          title="Eu vou"
+          title={isEnded ? "Evento encerrado" : "Eu vou"}
+          disabled={isEnded}
         >
           <IconGoing active={isGoing} />
         </button>

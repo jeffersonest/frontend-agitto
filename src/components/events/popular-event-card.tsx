@@ -20,6 +20,7 @@ type Props = {
   tags?: string[];
   attendeeCount?: number;
   ownerUsername?: string | null;
+  isEnded?: boolean;
 };
 
 export default function PopularEventCard({
@@ -31,7 +32,8 @@ export default function PopularEventCard({
   coverImageUrl,
   tags,
   attendeeCount,
-  ownerUsername
+  ownerUsername,
+  isEnded
 }: Props) {
   const category = categoryFromTags(tags);
   const sportColor = categoryColorHex(category);
@@ -75,9 +77,15 @@ export default function PopularEventCard({
         updateInteraction(id, { isInterested: true, isGoing: false });
         await setRsvp(id, "INTERESTED");
       }
-    } catch {
+    } catch (error: unknown) {
       updateInteraction(id, { isInterested: prev });
-      toast.error("Falha ao atualizar interesse");
+      const err = error as { message?: string };
+      const msg = err?.message || "";
+      if (msg.includes("past event") || msg.includes("encerrado")) {
+        toast.error("Este evento já foi encerrado");
+      } else {
+        toast.error("Falha ao atualizar interesse");
+      }
     }
   }
 
@@ -94,9 +102,15 @@ export default function PopularEventCard({
         updateInteraction(id, { isGoing: true, isInterested: false });
         await setRsvp(id, "GOING");
       }
-    } catch {
+    } catch (error: unknown) {
       updateInteraction(id, { isGoing: prev });
-      toast.error("Falha ao atualizar participação");
+      const err = error as { message?: string };
+      const msg = err?.message || "";
+      if (msg.includes("past event") || msg.includes("encerrado")) {
+        toast.error("Este evento já foi encerrado");
+      } else {
+        toast.error("Falha ao atualizar participação");
+      }
     }
   }
 
@@ -134,6 +148,11 @@ export default function PopularEventCard({
             <span>{emoji}</span>
             <span>{category}</span>
           </span>
+          {isEnded && (
+            <span className="rounded-full bg-gray-700 text-white text-xs px-3 py-1 font-medium">
+              Encerrado
+            </span>
+          )}
         </div>
         <div className="absolute top-3 right-3 flex items-center gap-2">
           <button
@@ -147,19 +166,21 @@ export default function PopularEventCard({
           </button>
           <button
             type="button"
-            className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white"
+            className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Tenho interesse"
-            title="Tenho interesse"
+            title={isEnded ? "Evento encerrado" : "Tenho interesse"}
             onClick={onToggleInterest}
+            disabled={isEnded}
           >
             <IconInterest active={isInterested} />
           </button>
           <button
             type="button"
-            className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white"
+            className="size-8 rounded-full bg-white/80 grid place-items-center hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Eu vou"
-            title="Eu vou"
+            title={isEnded ? "Evento encerrado" : "Eu vou"}
             onClick={onToggleGoing}
+            disabled={isEnded}
           >
             <IconGoing active={isGoing} />
           </button>

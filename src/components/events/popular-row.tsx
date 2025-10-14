@@ -87,6 +87,7 @@ export default function PopularRow({ myId }: { myId: string | null }) {
                   tags={ev.tags}
                   attendeeCount={ev.attendeeCount}
                   ownerUsername={ev.owner?.username ?? null}
+                  isEnded={ev.isEnded}
                 />
               </div>
             ))}

@@ -141,6 +141,7 @@ export default function UserMenu() {
           <hr className="my-1 border-border" />
           <Link href="/events" className="block rounded-md px-3 py-2 text-sm hover:bg-secondary">Eventos</Link>
           <Link href="/my-events" className="block rounded-md px-3 py-2 text-sm hover:bg-secondary">Meus eventos</Link>
+          <Link href="/followers" className="block rounded-md px-3 py-2 text-sm hover:bg-secondary">Seguidores</Link>
           <button onClick={() => setNotifOpen(true)} className="block w-full text-left rounded-md px-3 py-2 text-sm hover:bg-secondary">
             Notificações
             {active.length > 0 && (

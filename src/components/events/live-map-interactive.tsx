@@ -96,10 +96,16 @@ function useLeaflet() {
 export default function LiveMapInteractive() {
   const { data, isLoading } = useLiveMap(undefined);
   const markers = useMemo(() => data?.markers ?? [], [data?.markers]);
-  const validMarkers = useMemo(
-    () => markers.filter((m): m is LiveMapMarker => typeof (m as LiveMapMarker | undefined)?.lat === "number" && typeof (m as LiveMapMarker | undefined)?.lng === "number"),
-    [markers]
-  );
+  const validMarkers = useMemo(() => {
+    const isValidCoord = (v: unknown) => typeof v === "number" && Number.isFinite(v);
+    const inRange = (lat: number, lng: number) => lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+    return markers.filter((m): m is LiveMapMarker => {
+      const lat = (m as LiveMapMarker | undefined)?.lat as unknown;
+      const lng = (m as LiveMapMarker | undefined)?.lng as unknown;
+      if (!isValidCoord(lat) || !isValidCoord(lng)) return false;
+      return inRange(lat as number, lng as number);
+    });
+  }, [markers]);
   const center = useMemo(() => {
     if (validMarkers.length === 0) return { lat: -14.235, lng: -51.9253 };
     const mid = Math.floor(validMarkers.length / 2);
@@ -244,11 +250,22 @@ export default function LiveMapInteractive() {
     const addGroup = () => { try { group.addTo(map); } catch {} };
     setTimeout(addGroup, 0);
     if (validMarkers.length > 0) {
-      const bounds = L.latLngBounds(validMarkers.map((m: LiveMapMarker) => [m.lat, m.lng] as [number, number]));
-      const size = map.getSize();
-      const padding = Math.min(size.x, size.y) * 0.15;
-      map.fitBounds(bounds, { padding: [padding, padding], maxZoom: 13 });
-      if (validMarkers.length === 1) map.setZoom(13);
+      try {
+        const pairs = validMarkers.map((m: LiveMapMarker) => [m.lat, m.lng] as [number, number]);
+        const bounds = L.latLngBounds(pairs);
+        // @ts-expect-error Leaflet bounds validity check
+        const ok = typeof bounds?.isValid === "function" ? bounds.isValid() : pairs.length > 0;
+        if (ok) {
+          const size = map.getSize();
+          const padding = Math.min(size.x, size.y) * 0.15;
+          map.fitBounds(bounds, { padding: [padding, padding], maxZoom: 13 });
+          if (validMarkers.length === 1) map.setZoom(13);
+        } else {
+          map.setView([center.lat, center.lng], 5);
+        }
+      } catch {
+        map.setView([center.lat, center.lng], 5);
+      }
     } else {
       map.setView([center.lat, center.lng], 5);
     }
