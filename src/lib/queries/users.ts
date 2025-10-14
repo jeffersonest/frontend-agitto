@@ -11,7 +11,17 @@ export const userKeys = {
 };
 
 export function usePublicProfile(username: string) {
-  return useQuery({ queryKey: userKeys.profile(username), queryFn: () => getPublicProfile(username), enabled: Boolean(username) });
+  return useQuery({ 
+    queryKey: userKeys.profile(username), 
+    queryFn: async () => {
+      console.log('Fetching profile for:', username);
+      const result = await getPublicProfile(username);
+      console.log('Profile result:', result);
+      return result;
+    }, 
+    enabled: Boolean(username),
+    retry: 1
+  });
 }
 
 export function useUserInterested(userId?: string, take: number = 12) {

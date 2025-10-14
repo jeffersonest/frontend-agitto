@@ -19,6 +19,24 @@ import { shortName } from "@/lib/text";
 export default function UserProfilePage() {
   const params = useParams<{ username: string }>();
   const username = params.username;
+  
+  const [myId, setMyId] = useState<string | null>(null);
+  const [view, setView] = useState<"events" | "gallery">("events");
+
+  // Buscar meu ID primeiro
+  useEffect(() => {
+    async function fetchMe() {
+      try {
+        const user = await getMe() as { id: string };
+        setMyId(user.id);
+      } catch {
+        setMyId(null);
+      }
+    }
+    fetchMe();
+  }, []);
+
+  // Só fazer a query do perfil quando temos o myId ou sabemos que não tem usuário logado
   const profile = usePublicProfile(username);
   const userId = profile.data?.user?.id as string | undefined;
   const interested = useUserInterested(userId, 12);
@@ -30,11 +48,8 @@ export default function UserProfilePage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const setInteractions = useEventInteractions((state) => state.setInteractions);
 
-  const [myId, setMyId] = useState<string | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [view, setView] = useState<"events" | "gallery">("events");
-
   const isOwnProfile = myId && userId && myId === userId;
+  const isFollowing = profile.data?.isFollowing ?? false;
 
   useEffect(() => {
     async function fetchMe() {
@@ -105,14 +120,16 @@ export default function UserProfilePage() {
                 <div className="flex items-center gap-2 shrink-0">
                   {isOwnProfile ? (
                     <Link href="/settings" className="px-3 py-1.5 rounded-lg bg-primary text-white text-sm">Editar perfil</Link>
-                  ) : (userId && myId) ? (
+                  ) : userId && myId && !isOwnProfile ? (
                     <FollowButton
                       userId={userId}
                       initialIsFollowing={isFollowing}
                       variant="default"
                       size="sm"
-                      onToggle={setIsFollowing}
+                      username={username}
                     />
+                  ) : myId === null ? (
+                    <div className="text-sm text-muted-foreground">Carregando...</div>
                   ) : null}
                 </div>
               </div>
