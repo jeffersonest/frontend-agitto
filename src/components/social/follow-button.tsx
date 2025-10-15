@@ -33,12 +33,10 @@ export default function FollowButton({ userId, initialIsFollowing, variant = "de
     setIsLoading(true);
 
     if (username) {
-      queryClient.setQueryData(["user", "profile", username], (old: any) => {
+      type ProfileData = { user: { id: string; name: string; username: string; bio?: string | null; profileImageUrl?: string | null }; stats?: unknown; isFollowing?: boolean } | undefined;
+      queryClient.setQueryData<ProfileData>(["user", "profile", username], (old) => {
         if (!old) return old;
-        return {
-          ...old,
-          isFollowing: newState,
-        };
+        return { ...old, isFollowing: newState } as ProfileData;
       });
     }
 
@@ -58,12 +56,10 @@ export default function FollowButton({ userId, initialIsFollowing, variant = "de
       setIsFollowing(prevState);
 
       if (username) {
-        queryClient.setQueryData(["user", "profile", username], (old: any) => {
+        type ProfileData = { user: { id: string; name: string; username: string; bio?: string | null; profileImageUrl?: string | null }; stats?: unknown; isFollowing?: boolean } | undefined;
+        queryClient.setQueryData<ProfileData>(["user", "profile", username], (old) => {
           if (!old) return old;
-          return {
-            ...old,
-            isFollowing: prevState,
-          };
+          return { ...old, isFollowing: prevState } as ProfileData;
         });
       }
 

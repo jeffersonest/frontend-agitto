@@ -32,7 +32,7 @@ export default function LiveMapWidget() {
         </div>
       </div>
       <div className="rounded-lg overflow-hidden border bg-secondary">
-        <iframe title="live-map" src={mapUrl} className="w-full h-56" />
+        <iframe title="live-map" src={mapUrl} className="w-full h-80" />
       </div>
       <div className="mt-3 space-y-2">
         {isLoading ? (

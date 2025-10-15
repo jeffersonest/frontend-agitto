@@ -418,7 +418,7 @@ export default function LiveMapInteractive() {
         <h2 className="text-lg font-semibold">Mapa ao vivo</h2>
       </div>
       <div className="relative rounded-2xl overflow-hidden ring-1 ring-black/5 bg-white/60 backdrop-blur">
-        <div ref={mapRef} className="w-full h-64" />
+        <div ref={mapRef} className="w-full h-96" />
         {!leafletReady && (
           <div className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">Carregando mapa…</div>
         )}
