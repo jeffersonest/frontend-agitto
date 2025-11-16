@@ -39,3 +39,10 @@ export interface TypingUser {
   userId: string;
   isTyping: boolean;
 }
+
+export interface AvailableContact {
+  id: string;
+  name: string | null;
+  username: string | null;
+  profileImageUrl: string | null;
+}

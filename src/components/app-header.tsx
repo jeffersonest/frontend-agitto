@@ -1,15 +1,13 @@
 "use client";
 import Link from "next/link";
-import { useEffect } from "react";
 import UserMenu from "@/components/user-menu";
 import { Logo } from "@/components/ui/logo";
-import { MessageSquare, Bell } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { Button } from "./ui/button";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { listActiveNotifications } from "@/lib/api/notifications";
 
 export default function AppHeader() {
-  const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery({
     queryKey: ["notifications", "active"],

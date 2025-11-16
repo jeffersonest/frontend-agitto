@@ -1,6 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as chatApi from "@/lib/api/chat";
-import type { Chat, Message } from "@/lib/types/chat";
+import type { Chat, Message, MessagesResponse } from "@/lib/types/chat";
+
+interface InfiniteMessagesData {
+  pages: MessagesResponse[];
+  pageParams: (string | undefined)[];
+}
 
 export function useChats() {
   return useQuery({
@@ -33,9 +38,9 @@ export function useSendMessage(chatId: string) {
   return useMutation({
     mutationFn: (content: string) => chatApi.sendMessage(chatId, content),
     onSuccess: (newMessage) => {
-      queryClient.setQueryData<any>(
+      queryClient.setQueryData<InfiniteMessagesData>(
         ["messages", chatId],
-        (old: any) => {
+        (old) => {
           if (!old?.pages) return old;
           const pages = [...old.pages];
           if (pages[0]) {
@@ -74,13 +79,13 @@ export function useMarkAsRead() {
   return useMutation({
     mutationFn: (messageId: string) => chatApi.markAsRead(messageId),
     onSuccess: (updatedMessage) => {
-      queryClient.setQueryData<any>(
+      queryClient.setQueryData<InfiniteMessagesData>(
         ["messages", updatedMessage.chatId],
-        (old: any) => {
+        (old) => {
           if (!old?.pages) return old;
           return {
             ...old,
-            pages: old.pages.map((page: any) => ({
+            pages: old.pages.map((page) => ({
               ...page,
               messages: page.messages.map((msg: Message) =>
                 msg.id === updatedMessage.id ? updatedMessage : msg

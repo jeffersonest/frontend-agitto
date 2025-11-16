@@ -11,7 +11,12 @@ import { MessageInput } from "@/components/chat/MessageInput";
 import { ChatList } from "@/components/chat/ChatList";
 import { Loader2, MessageSquare } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { Message } from "@/lib/types/chat";
+import type { Message, MessagesResponse } from "@/lib/types/chat";
+
+interface InfiniteMessagesData {
+  pages: MessagesResponse[];
+  pageParams: (string | undefined)[];
+}
 
 export default function ChatPage() {
   const params = useParams();
@@ -56,9 +61,9 @@ export default function ChatPage() {
   useEffect(() => {
     const cleanup = chatConnectionManager.onMessage((message: Message) => {
       if (message.chatId === chatId) {
-        queryClient.setQueryData<any>(
+        queryClient.setQueryData<InfiniteMessagesData>(
           ["messages", chatId],
-          (old: any) => {
+          (old) => {
             if (!old?.pages) return old;
             const pages = [...old.pages];
             if (pages[0]) {

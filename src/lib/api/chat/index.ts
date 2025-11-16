@@ -1,5 +1,5 @@
 import { http } from "../http";
-import type { Chat, Message, MessagesResponse } from "@/lib/types/chat";
+import type { Chat, Message, MessagesResponse, AvailableContact } from "@/lib/types/chat";
 
 export async function getChats(): Promise<Chat[]> {
   return http<Chat[]>("/chats");
@@ -47,6 +47,6 @@ export async function getUnreadCount(chatId: string): Promise<{ count: number }>
   return http<{ count: number }>(`/chats/${chatId}/unread-count`);
 }
 
-export async function getAvailableContacts() {
-  return http<any[]>("/chats/available-contacts");
+export async function getAvailableContacts(): Promise<AvailableContact[]> {
+  return http<AvailableContact[]>("/chats/available-contacts");
 }
