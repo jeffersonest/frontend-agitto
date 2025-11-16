@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
@@ -16,7 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const emailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
 const phoneSchema = z.object({ phone: z.string().regex(/^\+55\d{10,11}$/), password: z.string().min(6) });
 
-export default function LoginPage() {
+function LoginForm() {
   const qc = useQueryClient();
   const [mode, setMode] = useState<"email" | "phone">("email");
   const router = useRouter();
@@ -108,5 +108,13 @@ export default function LoginPage() {
         </div>
       </AuthSplitScreen>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Carregando...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
