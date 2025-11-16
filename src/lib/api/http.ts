@@ -27,6 +27,33 @@ type HttpOptions = {
   headers?: Record<string, string>;
 };
 
+async function refreshAccessToken(): Promise<string | null> {
+  const base = getApiBaseUrl();
+  try {
+    const refreshRes = await fetch(`${base}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+    });
+    const refreshData = await refreshRes.json().catch(() => undefined);
+    if (refreshRes.ok) {
+      const nextToken = (refreshData && (refreshData.accessToken || refreshData.token)) as string | undefined;
+      if (nextToken) {
+        setAccessToken(nextToken);
+        return nextToken;
+      }
+    }
+  } catch {}
+  return null;
+}
+
+function handleSessionExpired() {
+  setAccessToken(null);
+  if (typeof window !== "undefined") {
+    window.location.href = "/login?expired=true";
+  }
+}
+
 export async function http<T = unknown>(path: string, opts: HttpOptions = {}): Promise<T> {
   const base = getApiBaseUrl();
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
@@ -34,10 +61,12 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
     "Content-Type": "application/json",
     ...(opts.headers || {}),
   };
+
   const token = getAccessToken();
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
+
   async function doFetch(currentHeaders: Record<string, string>) {
     const response = await fetch(url, {
       method: opts.method || (opts.body ? "POST" : "GET"),
@@ -52,27 +81,21 @@ export async function http<T = unknown>(path: string, opts: HttpOptions = {}): P
   }
 
   let { response, payload } = await doFetch(headers);
+
   if (response.status === 401 && token) {
-    try {
-      const refreshRes = await fetch(`${base}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      const refreshData = await refreshRes.json().catch(() => undefined);
-      if (refreshRes.ok) {
-        const nextToken = (refreshData && (refreshData.accessToken || refreshData.token)) as string | undefined;
-        if (nextToken) {
-          setAccessToken(nextToken);
-          headers["Authorization"] = `Bearer ${nextToken}`;
-          ({ response, payload } = await doFetch(headers));
-        }
-      } else {
-        setAccessToken(null);
-      }
-    } catch {
-      setAccessToken(null);
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers["Authorization"] = `Bearer ${newToken}`;
+      ({ response, payload } = await doFetch(headers));
+    } else {
+      handleSessionExpired();
+      throw new Error("Sessão expirada");
     }
+  }
+
+  if (response.status === 401) {
+    handleSessionExpired();
+    throw new Error("Sessão expirada");
   }
 
   if (!response.ok) {

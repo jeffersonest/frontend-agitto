@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,8 +20,16 @@ export default function LoginPage() {
   const qc = useQueryClient();
   const [mode, setMode] = useState<"email" | "phone">("email");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const emailForm = useForm<z.infer<typeof emailSchema>>({ resolver: zodResolver(emailSchema), defaultValues: { email: "", password: "" } });
   const phoneForm = useForm<z.infer<typeof phoneSchema>>({ resolver: zodResolver(phoneSchema), defaultValues: { phone: "", password: "" } });
+
+  useEffect(() => {
+    const expired = searchParams.get("expired");
+    if (expired === "true") {
+      toast.error("Sua sessão expirou. Faça login novamente.");
+    }
+  }, [searchParams]);
 
   async function onSubmitEmail(values: z.infer<typeof emailSchema>) {
     try {
