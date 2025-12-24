@@ -11,8 +11,11 @@ import { toast } from "sonner";
 import { Camera, User, Users, Save, Settings } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { VerificationStatusCard } from "@/components/settings/VerificationStatusCard";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -21,8 +24,23 @@ export default function SettingsPage() {
   const [view, setView] = useState<"profile" | "social">("profile");
   const inputRef = useRef<HTMLInputElement>(null);
   const [myId, setMyId] = useState<string | null>(null);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>("");
 
-  type Me = { id?: string; name?: string; username?: string; bio?: string | null; profileImageUrl?: string | null };
+  type Me = {
+    id?: string;
+    name?: string;
+    username?: string;
+    bio?: string | null;
+    profileImageUrl?: string | null;
+    emailVerified?: boolean;
+    phoneVerified?: boolean;
+    phone?: string | null;
+    email?: string;
+  };
+
   useEffect(() => {
     getMe()
       .then((v) => {
@@ -32,6 +50,10 @@ export default function SettingsPage() {
         setUsername(m?.username || "");
         setBio(m?.bio || "");
         setImage(m?.profileImageUrl || null);
+        setEmailVerified(m?.emailVerified || false);
+        setPhoneVerified(m?.phoneVerified || false);
+        setPhone(m?.phone || null);
+        setEmail(m?.email || "");
       })
       .catch(() => {});
   }, []);
@@ -67,6 +89,32 @@ export default function SettingsPage() {
     } finally {
       setPending(false);
     }
+  }
+
+  async function handleVerifyEmail() {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/request-email-verification`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Falha ao enviar email de verificação");
+      }
+
+      toast.success("Email de verificação enviado! Verifique sua caixa de entrada.");
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "Erro ao enviar email";
+      toast.error(msg);
+    }
+  }
+
+  function handleVerifyPhone() {
+    router.push("/verify-phone");
   }
 
   return (
@@ -139,6 +187,15 @@ export default function SettingsPage() {
       <div className="px-6 pt-6 flex items-start justify-center">
         <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
+            {/* Verification Status */}
+            <VerificationStatusCard
+              emailVerified={emailVerified}
+              phoneVerified={phoneVerified}
+              phone={phone}
+              onVerifyEmail={handleVerifyEmail}
+              onVerifyPhone={handleVerifyPhone}
+            />
+
             {/* Tab Navigation */}
             <div className="flex items-center justify-between">
               <div className="inline-flex items-center gap-1 rounded-xl bg-white/80 p-1 ring-1 ring-black/5">

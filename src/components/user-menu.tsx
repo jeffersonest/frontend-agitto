@@ -114,8 +114,15 @@ export default function UserMenu() {
               {active.length > 9 ? "9+" : String(active.length)}
             </span>
           )}
-          {(me as unknown as MeResp)?.profileImageUrl || me?.avatarUrl ? (
-            <Image src={(me as unknown as MeResp)?.profileImageUrl || (me as unknown as MeResp)?.avatarUrl || ""} alt="avatar" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
+          {((me as unknown as MeResp)?.profileImageUrl && (me as unknown as MeResp)?.profileImageUrl !== "") ||
+           (me?.avatarUrl && me?.avatarUrl !== "") ? (
+            <Image
+              src={(me as unknown as MeResp)?.profileImageUrl || me?.avatarUrl || ""}
+              alt="avatar"
+              width={32}
+              height={32}
+              className="w-8 h-8 rounded-full object-cover"
+            />
           ) : (
             <span>{initial}</span>
           )}
