@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { Filter } from "lucide-react";
 import Image from "next/image";
 import { shortName } from "@/lib/text";
+import { fixImageUrl } from "@/lib/utils/image-url";
 
 type Me = { name?: string; email?: string; avatarUrl?: string } | null;
 
@@ -35,7 +36,14 @@ export default function UserMenu() {
   type MeResp = { name?: string; email?: string; avatarUrl?: string; profileImageUrl?: string; username?: string };
   useEffect(() => {
     getMe()
-      .then((data) => setMe(((data as MeResp) as Partial<{ name: string; email: string; avatarUrl: string }>) as Me ?? null))
+      .then((data) => {
+        const resp = data as MeResp;
+        setMe({
+          name: resp.name,
+          email: resp.email,
+          avatarUrl: fixImageUrl(resp.profileImageUrl || resp.avatarUrl),
+        });
+      })
       .catch(() => setMe(null));
   }, []);
 
