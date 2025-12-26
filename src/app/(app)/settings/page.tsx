@@ -6,7 +6,7 @@ import { useUserFollowers, useUserFollowing } from "@/lib/queries/users";
 import FloatingTextField from "@/components/ui/floating-text-field";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef, useState } from "react";
-import { getMe, updateProfile, uploadProfileImage } from "@/lib/api/auth";
+import { getMe, updateProfile, uploadProfileImage, requestEmailCode } from "@/lib/api/auth";
 import { toast } from "sonner";
 import { Camera, User, Users, Save, Settings } from "lucide-react";
 import Image from "next/image";
@@ -93,22 +93,11 @@ export default function SettingsPage() {
 
   async function handleVerifyEmail() {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/request-email-verification`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Falha ao enviar email de verificação");
-      }
-
+      await requestEmailCode(email);
       toast.success("Email de verificação enviado! Verifique sua caixa de entrada.");
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro ao enviar email";
+      console.error("Erro ao enviar email:", error);
       toast.error(msg);
     }
   }
