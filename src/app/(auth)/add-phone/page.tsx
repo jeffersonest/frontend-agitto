@@ -20,7 +20,9 @@ function AddPhoneInner() {
   const prefill = sp.get("prefill") || "";
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errorDetails, setErrorDetails] = useState<string>("");
   const backTargetRef = useRef<string>("/login");
+  
   useEffect(() => {
     try {
       backTargetRef.current = getAccessToken() ? "/events" : "/login";
@@ -28,20 +30,39 @@ function AddPhoneInner() {
       backTargetRef.current = "/login";
     }
   }, []);
+  
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { phone: prefill },
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
+    setErrorDetails("");
     try {
       setLoading(true);
-      await addPhoneAndSendOtp(values.phone);
+      console.log("📱 Enviando OTP para:", values.phone);
+      
+      const result = await addPhoneAndSendOtp(values.phone);
+      console.log("✅ OTP enviado com sucesso:", result);
+      
       toast.success("Código enviado por SMS");
+      
+      // Aguarda um pouco antes de redirecionar
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      console.log("🔄 Redirecionando para /verify-phone");
       router.replace(`/verify-phone?phone=${encodeURIComponent(values.phone)}`);
     } catch (e: unknown) {
+      console.error("❌ Erro ao enviar OTP:", e);
       const msg = typeof e === "object" && e && "message" in e ? String((e as { message?: string }).message) : "Falha ao enviar código";
-      toast.error(msg);
+      
+      setErrorDetails(msg);
+      
+      if (msg.toLowerCase().includes("already registered")) {
+        toast.error("Este número já está cadastrado por outro usuário. Tente outro número.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -64,6 +85,11 @@ function AddPhoneInner() {
           />
           {form.formState.errors.phone && (
             <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
+          )}
+          {errorDetails && (
+            <div className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 p-3">
+              <p className="text-sm text-red-600 dark:text-red-400">{errorDetails}</p>
+            </div>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
             <Send size={16} /> {loading ? "Enviando..." : "Enviar código"}

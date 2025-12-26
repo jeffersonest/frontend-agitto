@@ -28,15 +28,31 @@ function VerifyPhoneInner() {
   }
 
   async function onResend() {
+    if (!phone) {
+      toast.error("Número de telefone não informado");
+      router.replace("/add-phone");
+      return;
+    }
+    
     try {
       setResending(true);
       const res = await addPhoneAndSendOtp(phone);
+      console.log("✅ Código reenviado com sucesso");
       if (res.ok) {
         setValue("");
         toast.success("Código reenviado");
       }
-    } catch {
-      toast.error("Falha ao reenviar código");
+    } catch (e: unknown) {
+      console.error("❌ Erro ao reenviar código:", e);
+      const msg = typeof e === "object" && e && "message" in e ? String((e as { message?: string }).message) : "Falha ao reenviar código";
+      
+      // Se o telefone está registrado por outro usuário, redireciona para adicionar novo número
+      if (msg.includes("already registered")) {
+        toast.error("Este número já está em uso. Por favor, use outro número.");
+        setTimeout(() => router.replace("/add-phone"), 2000);
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setResending(false);
     }
