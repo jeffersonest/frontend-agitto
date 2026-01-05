@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAvailableContacts, useFindOrCreateChat } from "@/lib/queries/chat";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Loader2, MessageSquarePlus, Search } from "lucide-react";
 import { Input } from "../ui/input";
+import { UserAvatar } from "../ui/user-avatar";
+import { fixImageUrl } from "@/lib/utils/image-url";
 
 interface NewChatDialogProps {
   children?: React.ReactNode;
@@ -83,12 +84,12 @@ export function NewChatDialog({ children }: NewChatDialogProps) {
                 disabled={findOrCreate.isPending}
                 className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
               >
-                <Avatar className="w-12 h-12">
-                  <AvatarImage src={contact.profileImageUrl || undefined} />
-                  <AvatarFallback>
-                    {contact.name?.[0] || contact.username?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  src={fixImageUrl(contact.profileImageUrl || null)}
+                  name={contact.name || undefined}
+                  username={contact.username || undefined}
+                  size="lg"
+                />
                 <div className="flex-1 text-left">
                   <p className="font-semibold text-sm">
                     {contact.name || contact.username}
