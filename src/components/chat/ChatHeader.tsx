@@ -3,9 +3,10 @@
 import { ArrowLeft, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import type { ChatUser } from "@/lib/types/chat";
 import { Button } from "../ui/button";
+import { UserAvatar } from "../ui/user-avatar";
+import { fixImageUrl } from "@/lib/utils/image-url";
 
 interface ChatHeaderProps {
   otherUser?: ChatUser;
@@ -24,14 +25,13 @@ export function ChatHeader({ otherUser }: ChatHeaderProps) {
       >
         <ArrowLeft className="w-5 h-5" />
       </Button>
-      <div className="relative">
-        <Avatar className="w-12 h-12 ring-2 ring-primary/20 shadow-md">
-          <AvatarImage src={otherUser?.profileImageUrl || undefined} />
-          <AvatarFallback className="text-base font-semibold bg-gradient-to-br from-primary/20 to-primary/10">
-            {otherUser?.name?.[0] || otherUser?.username?.[0] || "U"}
-          </AvatarFallback>
-        </Avatar>
-      </div>
+      <UserAvatar
+        src={fixImageUrl(otherUser?.profileImageUrl || null)}
+        name={otherUser?.name}
+        username={otherUser?.username || undefined}
+        size="lg"
+        className="ring-2 ring-primary/20 shadow-md"
+      />
       <div className="flex-1 min-w-0">
         <p className="font-bold text-base truncate">
           {otherUser?.name || otherUser?.username || "Usuário"}

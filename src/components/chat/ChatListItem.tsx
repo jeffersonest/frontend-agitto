@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useChatStore } from "@/lib/stores/chatStore";
 import type { Chat } from "@/lib/types/chat";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "../ui/user-avatar";
+import { fixImageUrl } from "@/lib/utils/image-url";
 
 interface ChatListItemProps {
   chat: Chat;
@@ -56,14 +57,13 @@ export function ChatListItem({ chat }: ChatListItemProps) {
         isActive && "bg-gradient-to-r from-primary/10 to-primary/5 md:border-l-4 md:border-l-primary"
       )}
     >
-      <div className="relative">
-        <Avatar className="w-14 h-14 ring-2 ring-border/30 group-hover:ring-primary/30 transition-all shadow-sm">
-          <AvatarImage src={otherUser?.profileImageUrl || undefined} />
-          <AvatarFallback className="text-base font-semibold bg-gradient-to-br from-primary/15 to-primary/5">
-            {otherUser?.name?.[0] || otherUser?.username?.[0] || "U"}
-          </AvatarFallback>
-        </Avatar>
-      </div>
+      <UserAvatar
+        src={fixImageUrl(otherUser?.profileImageUrl || null)}
+        name={otherUser?.name}
+        username={otherUser?.username || undefined}
+        size="xl"
+        className="ring-2 ring-border/30 group-hover:ring-primary/30 transition-all shadow-sm"
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1.5">
           <span className="font-bold text-[15px] truncate">
