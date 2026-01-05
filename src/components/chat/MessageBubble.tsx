@@ -2,8 +2,9 @@
 
 import type { Message } from "@/lib/types/chat";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { motion } from "framer-motion";
+import { UserAvatar } from "../ui/user-avatar";
+import { fixImageUrl } from "@/lib/utils/image-url";
 
 interface MessageBubbleProps {
   message: Message;
@@ -30,14 +31,13 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
       )}
     >
       {!isOwn && (
-        <Avatar className="w-8 h-8 flex-shrink-0 ring-2 ring-border/50">
-          <AvatarImage src={message.sender?.profileImageUrl || undefined} />
-          <AvatarFallback className="text-xs font-medium bg-gradient-to-br from-primary/20 to-primary/10">
-            {message.sender?.name?.[0] ||
-              message.sender?.username?.[0] ||
-              "U"}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          src={fixImageUrl(message.sender?.profileImageUrl || null)}
+          name={message.sender?.name}
+          username={message.sender?.username || undefined}
+          size="sm"
+          className="ring-2 ring-border/50"
+        />
       )}
       <div className="flex flex-col gap-1">
         <div
