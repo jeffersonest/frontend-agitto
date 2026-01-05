@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import FollowButton from "./follow-button";
 import { Users } from "lucide-react";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { fixImageUrl } from "@/lib/utils/image-url";
 
 type User = {
   id: string;
@@ -25,19 +26,12 @@ export default function UserCard({ user, showFollowButton = true, onFollowToggle
   return (
     <div className="flex items-center gap-3 p-4 rounded-lg bg-white border hover:shadow-sm transition-shadow">
       <Link href={`/profile/${user.username}`} className="shrink-0">
-        {user.profileImageUrl ? (
-          <Image
-            src={user.profileImageUrl}
-            alt={user.name}
-            width={48}
-            height={48}
-            className="rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
-            {user.name.charAt(0).toUpperCase()}
-          </div>
-        )}
+        <UserAvatar
+          src={fixImageUrl(user.profileImageUrl)}
+          name={user.name}
+          username={user.username || undefined}
+          size="lg"
+        />
       </Link>
 
       <Link href={`/profile/${user.username}`} className="flex-1 min-w-0">

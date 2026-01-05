@@ -9,10 +9,11 @@ import { useEffect, useRef, useState } from "react";
 import { getMe, updateProfile, uploadProfileImage, requestEmailCode } from "@/lib/api/auth";
 import { toast } from "sonner";
 import { Camera, User, Users, Save, Settings } from "lucide-react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { VerificationStatusCard } from "@/components/settings/VerificationStatusCard";
 import { useRouter } from "next/navigation";
+import { UserAvatar } from "@/components/ui/user-avatar";
+import { fixImageUrl } from "@/lib/utils/image-url";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -120,21 +121,15 @@ export default function SettingsPage() {
           >
             <div className="flex items-center gap-4">
               <div className="relative group">
-                {image ? (
-                  <div className="w-24 h-24 rounded-full ring-2 ring-white/80 overflow-hidden flex-shrink-0">
-                    <Image
-                      src={image}
-                      alt="Avatar"
-                      width={96}
-                      height={96}
-                      className="w-24 h-24 object-cover transition-transform group-hover:scale-105"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-primary/10 text-primary grid place-items-center text-2xl font-semibold ring-2 ring-white/80 flex-shrink-0">
-                    {(name || email || "?").charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className="ring-2 ring-white/80 rounded-full">
+                  <UserAvatar
+                    src={fixImageUrl(image)}
+                    name={name}
+                    username={username}
+                    size="xl"
+                    className="transition-transform group-hover:scale-105"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => inputRef.current?.click()}
