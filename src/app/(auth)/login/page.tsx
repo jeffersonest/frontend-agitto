@@ -13,8 +13,8 @@ import { toast } from "sonner";
 import { loginWithPassword } from "@/lib/api/auth";
 import { useQueryClient } from "@tanstack/react-query";
 
-const emailSchema = z.object({ email: z.string().email(), password: z.string().min(6) });
-const phoneSchema = z.object({ phone: z.string().regex(/^\+55\d{10,11}$/), password: z.string().min(6) });
+const emailSchema = z.object({ email: z.string().email(), password: z.string().min(8) });
+const phoneSchema = z.object({ phone: z.string().regex(/^\+55\d{10,11}$/), password: z.string().min(8) });
 
 function LoginForm() {
   const qc = useQueryClient();

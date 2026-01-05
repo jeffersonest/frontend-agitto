@@ -61,7 +61,7 @@ function AddPhoneInner() {
       if (msg.toLowerCase().includes("already registered")) {
         toast.error("Este número já está cadastrado por outro usuário. Tente outro número.");
       } else {
-        toast.error(msg);
+      toast.error(msg);
       }
     } finally {
       setLoading(false);
