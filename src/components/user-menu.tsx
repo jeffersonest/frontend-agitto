@@ -57,8 +57,6 @@ export default function UserMenu() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
-  const initial = (me?.name || me?.email || "?").trim().charAt(0).toUpperCase();
-
   useEffect(() => {
     if (!notifOpen) return;
     qc.invalidateQueries({ queryKey: notificationKeys.active() });

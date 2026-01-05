@@ -5,8 +5,8 @@ import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
   src?: string | null;
-  name?: string;
-  username?: string;
+  name?: string | null;
+  username?: string | null;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
 }
