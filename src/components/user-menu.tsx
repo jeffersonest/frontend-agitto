@@ -13,11 +13,11 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Filter } from "lucide-react";
-import Image from "next/image";
 import { shortName } from "@/lib/text";
 import { fixImageUrl } from "@/lib/utils/image-url";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
-type Me = { name?: string; email?: string; avatarUrl?: string } | null;
+type Me = { name?: string; email?: string; avatarUrl?: string; username?: string } | null;
 
 export default function UserMenu() {
   const [me, setMe] = useState<Me>(null);
@@ -42,6 +42,7 @@ export default function UserMenu() {
           name: resp.name,
           email: resp.email,
           avatarUrl: fixImageUrl(resp.profileImageUrl || resp.avatarUrl),
+          username: resp.username,
         });
       })
       .catch(() => setMe(null));
@@ -116,24 +117,18 @@ export default function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <div className="size-8 rounded-full bg-primary/10 text-primary grid place-items-center font-semibold relative flex-shrink-0">
+        <div className="relative">
           {active.length > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-amber-400 text-amber-950 text-[10px] font-semibold grid place-items-center ring-2 ring-background">
+            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-amber-400 text-amber-950 text-[10px] font-semibold grid place-items-center ring-2 ring-background z-10">
               {active.length > 9 ? "9+" : String(active.length)}
             </span>
           )}
-          {((me as unknown as MeResp)?.profileImageUrl && (me as unknown as MeResp)?.profileImageUrl !== "") ||
-           (me?.avatarUrl && me?.avatarUrl !== "") ? (
-            <Image
-              src={(me as unknown as MeResp)?.profileImageUrl || me?.avatarUrl || ""}
-              alt="avatar"
-              width={32}
-              height={32}
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <span>{initial}</span>
-          )}
+          <UserAvatar 
+            src={me?.avatarUrl}
+            name={me?.name}
+            username={me?.username}
+            size="sm"
+          />
         </div>
         <div className="hidden sm:block text-left leading-tight">
           <div className="text-sm font-medium text-foreground">{shortName(me?.name || "Usuário")}</div>
